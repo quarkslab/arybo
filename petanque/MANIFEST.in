@@ -1,0 +1,4 @@
+graft include/pa
+graft bindings/python/distutils_pa_config
+graft third-party/boost
+graft third-party/pybind11

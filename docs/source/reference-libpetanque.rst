@@ -1,0 +1,2 @@
+libpetanque reference
+=====================

@@ -1,0 +1,8 @@
+#ifndef PA_CONFIG_H
+#define PA_CONFIG_H
+
+#if @CONFIG_USE_TBB@
+#define PA_USE_TBB
+#endif
+
+#endif

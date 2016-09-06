@@ -1,0 +1,7 @@
+xor5C python3 ../examples/test_xor_5C.py
+mba7  python3 ../examples/test_gen_mba.py 7
+mba8  python3 ../examples/test_gen_mba.py 8
+mba9  python3 ../examples/test_gen_mba.py 9
+new_mba5 python3 ../examples/simp_new_mba.py 5
+new_mba6 python3 ../examples/simp_new_mba.py 6
+new_mba7 python3 ../examples/simp_new_mba.py 7

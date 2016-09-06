@@ -1,0 +1,21 @@
+find_package(PythonLibs ${PYTHON_VERSION})
+set(PythonInterp_FIND_VERSION ${PYTHON_VERSION})
+find_package(PythonInterp)
+
+if(${PYTHONLIBS_FOUND}) 
+	set(PYTHON_BINDINGS_ENABLED TRUE)
+else()
+	set(PYTHON_BINDINGS_ENABLED FALSE)
+endif()
+
+if (NOT ${PYTHON_BINDINGS_ENABLED})
+	message(WARNING "Python ${PYTHON_VERSION} development librairies hasn't been found. Python bindings won't be compiled!")
+endif()
+
+find_package(TBB)
+if (NOT ${TBB_FOUND})
+	message(WARNING "Intel Threading Building Blocks hasn't been found. Some algorithms won't run across multiple threads.")
+	set(CONFIG_USE_TBB 0)
+else()
+	set(CONFIG_USE_TBB 1)
+endif()

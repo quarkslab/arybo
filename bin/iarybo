@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+#
+
+import os
+import sys
+
+from arybo.lib import MBA, expr_contains, expand_esf, expand_esf_inplace, simplify, simplify_inplace, boolean_expr_solve
+from arybo.tools import app_inverse, is_app_inversible, find_esfs
+
+from pytanque import symbol, imm, Vector, Matrix, analyses, esf
+
+def_use_esf = os.getenv("ARYBO_USE_ESF")
+if def_use_esf is None:
+    def_use_esf = False
+else:
+    try:
+        def_use_esf = bool(int(def_use_esf))
+    except:
+        def_use_esf = False
+
+def set_mba(n):
+    global mba
+    global x
+    global y
+    global a
+    global b
+    global c
+    global d
+    mba = MBA(n)
+    mba.use_esf = def_use_esf
+    x = mba.var('x')
+    y = mba.var('y')
+    a = mba.var('a')
+    b = mba.var('b')
+    c = mba.var('c')
+    d = mba.var('d')
+    for V in (x, y, a, b, c, d):
+        V.always_simplify()
+
+mba_N = None 
+if len(sys.argv) > 1:
+    mba_N = int(sys.argv[1])
+    set_mba(mba_N)
+
+# Launch IPython!
+doc = '''
+Welcome to Arybo (c) Quarkslab 2014-2016!
+=========================================
+
+                         `..----.`                    
+                       `.------------.                 
+                     `--.-.```````````.`               
+                     `  ``  ```````    .+yy-           
+                        ::oydmNNNNNmdysmMMMd`          
+                       /mNMNdyooymmMMMMMMNNd`          
+                    `/omMMNh/`.dhyNMMMMMMNm:           
+              .-.   -hddmMNh.-.+sdMMMMMMd+:            
+        `.:+sdmNmd/  `-omMMNdyymNMMMMNd+``-`           
+    .:+hmNNMMMMMMMm.  :yNNNNNNMMMMNhs:..`-:`           
+    `/shMMMMMMNNNMMy/ymmNNNMMMMNd+.```..-:-            
+     `+yNNMNNddNMMMMhyssyysyhdds-  `...--.             
+   .+yhhhdddhhhdNMMMMNNdosoososyyhyo---.``  ```        
+ `:osyhhhhhy:-:+oysdmNNhssssydNNhssyhds.`   ``....`    
+  `.-/syhho.     ``-+ssssshmMMMN+y+ohhMs        `.--`  
+      `...`         `.:/+dNMMMMMMNmNmNNo``..       -.  
+                         `-+hdMMMMMMMMh` ``      `..   
+                             .yNMMMMMd-`      ``..     
+                              `+mMMMMo.``    `--:.     
+                                .sNMMMNs`  `.:::::-    
+                                 .+mMMMMo   -::::--    
+                                 `-+NMMMN-  .::--`     
+                                  `:mMMMMh  .::.       
+                               ..--+NMMMMm`.o/..`      
+                               `.-+mMMMMMNoyy+         
+                                 :ydmMMMMN+`           
+                                 `.-:/oos+.            
+
+
+'''
+
+if not mba_N is None:
+    doc += '''
+These variables have been set for you:
+
+  mba = MBA(%d)
+  x, y, a, b, c, d = %d-bit vars
+
+You can use set_mba(N) to change the bit count of these variables.
+WARNING: on some IPython version, this might not work!
+''' % (mba_N, mba_N)
+else:
+    doc += '''
+Use the set_mba(N) function to define these variables:
+
+  mba = MBA(N)
+  x, y, a, b, c, d = N-bit vars
+
+You can reuse set_mba(N) to change the bit count of these variables.
+'''
+
+doc += '''
+Other exposed functions are:
+  - simplify, simplify_inplace, expand_esf, expand_esf_inplace
+  - symbol, imm, esf
+  - Vector/Matrix
+
+Other exposed modules are:
+  - analyses
+
+Report any issues to qbobf@quarkslab.com.
+'''
+
+from IPython.terminal.embed import InteractiveShellEmbed
+ipshell = InteractiveShellEmbed(banner1=doc, exit_msg="")
+ipshell()
