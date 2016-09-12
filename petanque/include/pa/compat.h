@@ -27,8 +27,10 @@
 #define PA_COMPAT_H
 
 #if defined(_MSC_VER)
+#ifndef HAVE_SSIZE_T
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;
+#endif
 #endif
 
 #endif
