@@ -24,10 +24,8 @@ struct stl_input_iterator: public std::iterator<std::input_iterator_tag, T>
 	using value_type = typename iterator_base::value_type;
 	static constexpr bool is_integer = std::is_integral<value_type>::value;
 	using difference_type = typename iterator_base::difference_type;
-	using pointer = typename std::conditional<is_integer,
-	  value_type, typename iterator_base::pointer>::type;
-	using reference = typename std::conditional<is_integer,
-	  value_type, typename iterator_base::reference>::type;
+	using pointer = typename iterator_base::pointer;
+	using reference = typename iterator_base::reference;
 
 	stl_input_iterator() { }
 	stl_input_iterator(py::iterator const& it):
@@ -41,10 +39,38 @@ struct stl_input_iterator: public std::iterator<std::input_iterator_tag, T>
 	{
 		return *(*_it).template cast<typename std::add_pointer<typename std::remove_reference<reference>::type>::type>();
 	}
-	pointer operator->() const { return (*_it).template cast<pointer>(); }
+	pointer operator->() const
+	{ 
+		return (*_it).template cast<pointer>();
+	}
 
 	stl_input_iterator& operator++() { ++_it; return *this; }
 	stl_input_iterator& operator++(int) { return _it++; }
+
+private:
+	py::iterator _it;
+};
+
+template <class T>
+struct stl_value_input_iterator: public std::iterator<std::input_iterator_tag, T>
+{
+	typedef T value_type;
+
+	stl_value_input_iterator() { }
+	stl_value_input_iterator(py::iterator const& it):
+		_it(it)
+	{ }
+
+	bool operator!=(stl_value_input_iterator const& o) const { return _it != o._it; }
+	bool operator==(stl_value_input_iterator const& o) const { return _it == o._it; }
+
+	value_type operator*() const
+	{
+		return (*_it).template cast<value_type>();
+	}
+
+	stl_value_input_iterator& operator++() { ++_it; return *this; }
+	stl_value_input_iterator& operator++(int) { return _it++; }
 
 private:
 	py::iterator _it;
@@ -203,11 +229,12 @@ static pa::Matrix simp_mat_copy(pa::Matrix const& m)
 	return ret;
 }
 
-template <class T>
+namespace __impl {
+template <class Iterator>
 class python_list_ro_wrapper
 {
 public:
-	typedef stl_input_iterator<const T> iterator;
+	typedef Iterator iterator;
 
 public:
 	python_list_ro_wrapper(py::list const& l):
@@ -221,6 +248,12 @@ public:
 private:
 	py::list const& _l;
 };
+} // __impl
+
+template <class T>
+using python_list_ro_wrapper = __impl::python_list_ro_wrapper<stl_input_iterator<const T>>;
+template <class T>
+using python_list_value_wrapper = __impl::python_list_ro_wrapper<stl_value_input_iterator<T>>;
 
 static pa::Expr subs_vectors_exp(pa::Expr const& e, py::list const& vecs, py::list const& values)
 {
@@ -232,7 +265,7 @@ static pa::Expr subs_vectors_exp(pa::Expr const& e, py::list const& vecs, py::li
 static pa::Vector subs_vectors_vec(pa::Vector const& v, py::list const& vecs, py::list const& values)
 {
 	pa::Vector ret = v;
-	pa::subs_vectors(ret, python_list_ro_wrapper<pa::Vector>(vecs), python_list_ro_wrapper<ssize_t>(values));
+	pa::subs_vectors(ret, python_list_ro_wrapper<pa::Vector>{vecs}, python_list_value_wrapper<uint64_t>{values});
 	return ret;
 }
 

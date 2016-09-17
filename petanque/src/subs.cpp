@@ -23,36 +23,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <pa/cast.h>
 #include <pa/subs.h>
 #include <pa/matrix.h>
 
 void pa::subs(Expr& e, bitfield const& syms, bitfield const& values)
 {
-	switch (e.type()) {
-		case expr_type_id::symbol_type:
-		{
-			ExprSym const& s = e.as<ExprSym>();
-			const ExprSym::idx_type idx = s.idx();
-			if (syms.get_bit(idx)) {
-				e.set<ExprImm>(values.get_bit(idx));
-			}
-			break;
+	if (auto* S = expr_dynamic_cast<ExprSym*>(&e)) {
+		const ExprSym::idx_type idx = S->idx();
+		if (syms.get_bit(idx)) {
+			e.set<ExprImm>(values.get_bit(idx));
 		}
+		return;
+	}
 
-		case expr_type_id::mul_type:
-		case expr_type_id::add_type:
-		{
-			ExprArgs& args = e.args();
-			for (Expr& a: args) {
-				subs(a, syms, values);
-			}
-			args.sort();
-			break;
+	if (e.has_args()) {
+		ExprArgs& args = e.args();
+		for (Expr& a: args) {
+			subs(a, syms, values);
 		}
-
-		default:
-			break;
-	};
+		args.sort();
+	}
 }
 
 void pa::subs(Vector& v, bitfield const& syms, bitfield const& values)
