@@ -6,8 +6,6 @@ Concepts
 This section describes some of the theory used in arybo/petanque, the choices
 that have been made and the various limitations that exist.
 
-This is basically a brief summary of this paper. (TODO)
-
 .. _sec-theory-anf:
 
 Representation of boolean expressions and bit-vectors
