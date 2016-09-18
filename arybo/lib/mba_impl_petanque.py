@@ -57,7 +57,7 @@ def evaluate_expr(E, nbits, values):
         ret_V = subs_vectors(E, vecs, values)
         simplify_inplace(ret_V)
         return ret_V.get_int_be()
-    except TypeError:
+    except RuntimeError:
         vecs_f = []
         for v in vecs:
             vecs_f.extend(v)
