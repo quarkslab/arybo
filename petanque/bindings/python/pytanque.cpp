@@ -188,13 +188,13 @@ static std::shared_ptr<pa::Matrix> matrix_identity(const size_t n)
 	return std::make_shared<pa::Matrix>(pa::Matrix::identity(n));
 }
 
-void matrix_construct(pa::Matrix& ret, const size_t nlines, const size_t ncols, py::object& f)
+void matrix_construct(pa::Matrix* self, const size_t nlines, const size_t ncols, py::object& f)
 {
-	ret = pa::Matrix::construct(nlines, ncols,
-		[&f] (const size_t i, const size_t j) -> pa::Expr 
+	new (self) pa::Matrix{pa::Matrix::construct(nlines, ncols,
+		[&f] (const size_t i, const size_t j) -> pa::Expr
 		{
 			return *f(i, j).cast<pa::Expr const*>();
-		});
+		})};
 }
 
 static std::string matrix_str(pa::Matrix const& m)

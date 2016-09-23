@@ -76,7 +76,7 @@ public:
 		pa::Matrix ret(nlines, ncols);
 		for (size_t i = 0; i < nlines; i++) {
 			for (size_t j = 0; j < ncols; j++) {
-				ret.at(i, j) = std::move(f(i, j));
+				ret.at(i, j) = f(i, j);
 			}
 		}
 		return ret;
