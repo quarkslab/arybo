@@ -69,6 +69,18 @@ def expand_esf_inplace(e):
     __call_impl_func_inplace(expand_esf_inplace_vec, e)
     return e
 
+def flatten(vars_):
+    vecs = [v.vec if isinstance(v, MBAVariable) else v for v in vars_]
+    total_len = sum((len(v) for v in vecs))
+    ret = Vector(total_len)
+    i = 0
+    for v in vecs:
+        for j in range(len(v)):
+            ret[i] = v[j]
+            i += 1
+    mba = MBA(total_len)
+    return mba.from_vec(ret)
+
 class MBAVariable(object):
     ''' Represents a symbolic variable in a given :class:`MBA` space.
 
@@ -99,12 +111,21 @@ class MBAVariable(object):
         v.always_simplify(self._always_simplify)
         return v
 
+    def __new_mba(self, n):
+        ret = type(self.mba)(n)
+        ret.use_esf = self.mba.use_esf
+        return ret
+
     def __ret(self, v):
         if self._expand_esf:
             expand_esf_inplace(v)
         if self._always_simplify:
             simplify_inplace(v)
         return self.__gen_v(v)
+
+    @property
+    def nbits(self):
+        return self.mba.nbits
 
     @classmethod
     def from_vec(cls, mba, data):
@@ -122,7 +143,7 @@ class MBAVariable(object):
         return self.arg[idx]
 
     def __call_op(self, name, o):
-        if isinstance(o, int):
+        if isinstance(o, (int,long)):
             fname = '%s_n' % name
         elif isinstance(o, Expr):
             fname = "%s_exp" % name
@@ -155,6 +176,9 @@ class MBAVariable(object):
 
     def __rmul__(self, o):
         return self.__mul__(o)
+
+    def udiv(self, o):
+        return self.__call_op('div', o)
 
     def __truediv__(self, o):
         return self.__call_op('div', o)
@@ -197,8 +221,54 @@ class MBAVariable(object):
             o = o.vec
         return self.vec == o
 
-    def __getitem__(self, idx):
-        return self.at(idx)
+    def __getitem__(self, v):
+        if isinstance(v, slice):
+            indices = range(*v.indices(self.nbits))
+            # Returns a variable from a different MBA space
+            mba_ret = self.__new_mba(len(indices))
+            ret = mba_ret.from_cst(0)
+            for i,idx in enumerate(indices):
+                ret.vec[i] = self.at(idx)
+            return ret
+        elif isinstance(v, (int,long)):
+            return self.at(v)
+        else:
+            raise ValueError("unsupported slice/index type")
+
+    def zext(self, n):
+        ''' Zero-extend the variable to n bits.
+        
+        n bits must be stricly larger than the actual number of bits, or a
+        ValueError is thrown
+        '''
+
+        if n <= self.nbits:
+            raise ValueError("n must be > %d bits" % self.nbits)
+
+        mba_ret = self.__new_mba(n)
+        ret = mba_ret.from_cst(0)
+        for i in range(self.nbits):
+            ret.vec[i] = self.vec[i]
+        return mba_ret.from_vec(ret)
+
+    def sext(self, n):
+        ''' Sign-extend the variable to n bits.
+        
+        n bits must be stricly larger than the actual number of bits, or a
+        ValueError is thrown
+        '''
+
+        if n <= self.nbits:
+            raise ValueError("n must be > %d bits" % self.nbits)
+
+        mba_ret = self.__new_mba(n)
+        ret = mba_ret.from_cst(0)
+        for i in range(self.nbits):
+            ret.vec[i] = self.vec[i]
+        last_bit = self.vec[self.nbits-1]
+        for i in range(self.nbits,n):
+            ret.vec[i] = last_bit
+        return mba_ret.from_vec(ret)
 
     def evaluate(self, values):
         ''' Evaluates the expression to an integer
@@ -305,6 +375,12 @@ class MBAVariable(object):
         A current limitation is that the number of bits must be a multiple of 8.
         '''
         return self.mba.to_bytes(self.vec)
+
+    def rol(self, o):
+        return self.__call_op('rol', o)
+
+    def ror(self, o):
+        return self.__call_op('ror', o)
 
 
 class MBA(MBAImpl):

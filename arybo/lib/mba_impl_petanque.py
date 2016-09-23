@@ -415,6 +415,20 @@ class MBAImpl(object):
     def rshift_n(self, X, n):
         return X<<n
 
+    def rol_n(self, X, n):
+        # rol(0b(d b c a), 1) = 0b(b c a d)
+        # rol(vec(a,b,c,d), 1) = vec(d,a,c,b))
+        ret = Vector(self.nbits)
+        for i in range(self.nbits):
+            ret[i] = X[(i-n)%self.nbits]
+        return ret
+
+    def ror_n(self, X, n):
+        ret = Vector(self.nbits)
+        for i in range(self.nbits):
+            ret[i] = X[(i+n)%self.nbits]
+        return ret
+
     def evaluate(self, E, values):
         return evaluate_expr(E, self.nbits, values)
 

@@ -23,6 +23,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from arybo.lib.mba_if import MBA, MBAVariable, expr_contains, expand_esf, expand_esf_inplace, simplify, simplify_inplace
-from arybo.lib.bool_solver import BooleanSystemSolver, boolean_expr_solve
+from arybo.lib.mba_if import MBA, MBAVariable, expr_contains, expand_esf, expand_esf_inplace, simplify, simplify_inplace, flatten
 from arybo.lib.tester import MBATester
+from arybo.lib.bool_solver import BooleanSystemSolver, boolean_expr_solve

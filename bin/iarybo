@@ -4,7 +4,7 @@
 import os
 import sys
 
-from arybo.lib import MBA, expr_contains, expand_esf, expand_esf_inplace, simplify, simplify_inplace, boolean_expr_solve
+from arybo.lib import MBA, expr_contains, expand_esf, expand_esf_inplace, simplify, simplify_inplace, boolean_expr_solve, flatten
 from arybo.tools import app_inverse, is_app_inversible, find_esfs
 
 from pytanque import symbol, imm, Vector, Matrix, analyses, esf
