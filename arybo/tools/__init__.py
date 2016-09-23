@@ -23,4 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from arybo.tools.petanque import app_inverse, is_app_inversible, find_esfs, get_depends, get_depends_as_set
+import sys
+from arybo.tools.petanque import app_inverse, is_app_inversible, find_esfs
+from arybo.tools.petanque import get_depends, get_depends_as_set
+from arybo.tools.triton_ import triton_available, triton2arybo
