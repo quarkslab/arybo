@@ -25,6 +25,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import copy
+import six
+from six.moves import range
+
 from pytanque import symbol, imm, Vector, Matrix, simplify, simplify_inplace, expand_esf_inplace, subs_vectors, subs_exprs, analyses, esf_vector, esf, expand_esf, or_to_esf_inplace
 
 def get_vector_from_cst(nbits, n):
@@ -479,7 +482,7 @@ class MBAImpl(object):
 
     def from_bytes(self, s):
         ret = Vector(self.nbits)
-        for i,c in enumerate(s):
+        for i,c in enumerate(six.iterbytes(s)):
             for j in range(8):
                 ret[i*8+j] = imm((c>>j)&1)
         return ret

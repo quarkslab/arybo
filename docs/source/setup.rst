@@ -17,7 +17,7 @@ Under Ubuntu >= 16.04, one can simply do:
 
     $ sudo apt-get install build-essentials g++
 
-Arybo is a Python 3 only library. For now, only petanque can be used as a
+Arybo is a Python 2 and 3 library. For now, only petanque can be used as a
 backend for handling symbolic boolean expression.
 
 Quick start using pip
@@ -26,11 +26,11 @@ Quick start using pip
 Under OSX/Linux, you first need to check that you have at least clang >= 3.5 or
 GCC >= 4.9 (see above). 
 
-Then, simply do (using python3 as Arybo is a python3-only library):
+Then, simply do:
 
 .. code:: bash
 
-    $ pip3 install arybo
+    $ pip install arybo
 
 This will download and install petanque for you, and then arybo.
 
@@ -53,7 +53,7 @@ pytanque (petanque python bindings) can be installed directly from the source:
 .. code:: bash
 
     $ cd /path/to/arybo/petanque
-    $ python3 ./setup.py install
+    $ python ./setup.py install
 
 This will compile petanque and the python bindings (pytanque) inside a unique
 python module and be installed.
@@ -63,7 +63,7 @@ Then, install the arybo library:
 .. code:: bash
 
     $ cd /path/to/arybo
-    $ python3 ./setup.py install
+    $ python ./setup.py install
 
 Compilation of libpetanque and pytanque with CMake
 --------------------------------------------------

@@ -23,11 +23,14 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from pytanque import Vector, subs_exprs, SymbolsSet, SymbolsHist, esf
-from arybo.lib import MBA, MBAVariable, expand_esf, simplify, simplify_inplace, expand_esf_inplace
+import six
+from six.moves import range
 
 import networkx as nx
 import collections, itertools
+
+from pytanque import Vector, subs_exprs, SymbolsSet, SymbolsHist, esf
+from arybo.lib import MBA, MBAVariable, expand_esf, simplify, simplify_inplace, expand_esf_inplace
 
 try:
     from scipy import special
@@ -49,7 +52,7 @@ except ImportError:
 def get_depends(e):
     if e.is_add():
         for a in e.args():
-            yield from get_depends(a)
+            for d in get_depends(a): yield d
     if e.is_mul():
         for a in e.args():
             if a.is_sym():
@@ -108,8 +111,6 @@ def app_inverse(A):
     idx_base = Y[0].sym_idx()
     for i,e in enumerate(G1nl):
         for d in get_depends_as_set(e):
-            print(Y[i].sym_idx())
-            print(d.sym_idx())
             DG.add_edge(Y[i].sym_idx()-idx_base, d.sym_idx()-idx_base)
 
     if not nx.is_directed_acyclic_graph(DG):
@@ -125,7 +126,7 @@ def app_inverse(A):
             solved[i] = X[i]
         else:
             # Doing this in the reversed topological order should make this always work!
-            solved[i] = simplify_inplace(X[i] + simplify_inplace(subs_exprs(G1nl[i], [Y[i] for i in solved.keys()], list(solved.values()))))
+            solved[i] = simplify_inplace(X[i] + simplify_inplace(subs_exprs(G1nl[i], [Y[j] for j in six.iterkeys(solved)], list(six.itervalues(solved)))))
     G1inv = Vector(N)
     for i in range(N):
         G1inv[i] = solved.get(i, X[i])

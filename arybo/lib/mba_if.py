@@ -23,6 +23,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import six
+from six.moves import range
+
 from arybo.lib.mba_impl_petanque import MBAImpl
 from arybo.lib.mba_impl_petanque import simplify as simplify_vec
 from arybo.lib.mba_impl_petanque import expand_esf as expand_esf_vec
@@ -143,7 +146,7 @@ class MBAVariable(object):
         return self.arg[idx]
 
     def __call_op(self, name, o):
-        if isinstance(o, (int,long)):
+        if isinstance(o, six.integer_types):
             fname = '%s_n' % name
         elif isinstance(o, Expr):
             fname = "%s_exp" % name
@@ -166,7 +169,7 @@ class MBAVariable(object):
         return self.__call_op('sub', o)
 
     def __rsub__(self, o):
-        if (isinstance(o, int)):
+        if isinstance(o, six.integer_types):
             return self.mba.from_cst(o)-self
         else:
             return o-self
@@ -230,7 +233,7 @@ class MBAVariable(object):
             for i,idx in enumerate(indices):
                 ret.vec[i] = self.at(idx)
             return ret
-        elif isinstance(v, (int,long)):
+        elif isinstance(v, six.integer_types):
             return self.at(v)
         else:
             raise ValueError("unsupported slice/index type")

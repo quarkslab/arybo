@@ -23,8 +23,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from pytanque import imm, Vector, imm
 import itertools
+from six.moves import range
+
+from pytanque import imm, Vector, imm
 
 # TODO: add the relevant interface into SymbolsSet and use it here!
 class BooleanSystemSolver:
@@ -90,7 +92,8 @@ class BooleanSystemSolver:
 
             for idx in next_I0:
                 new_idxes = idxes + [idx]
-                yield from iter_zeros(new_idxes, I0s[next_idx+1:])
+                for z in iter_zeros(new_idxes, I0s[next_idx+1:]):
+                    yield z
 
         for idxes in iter_zeros([], self.I0s):
             new = Vector(fix1)

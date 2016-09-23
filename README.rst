@@ -12,11 +12,11 @@ The whole documentation is available here: https://pythonhosted.org/arybo/
 Quick start
 ===========
 
-Under Linux/OSX/Windows, Arybo can be installed through pip for Python3:
+Under Linux/OSX/Windows, Arybo can be installed through pip for Python 2 and 3:
 
 .. code::
 
-   $ pip3 install arybo
+   $ pip install arybo
 
 You will need at least clang 3.5 or GCC 4.9 to compile the python extension "pytanque".
 

@@ -25,6 +25,7 @@
 
 from sympy import *
 import copy
+from six.moves import range
 
 def mexpand(M):
     T = copy.deepcopy(M)

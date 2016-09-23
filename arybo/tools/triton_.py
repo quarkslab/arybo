@@ -1,4 +1,6 @@
 import operator
+import six
+
 try:
     from triton import AST_NODE as TAstN
     triton_available = True
@@ -72,7 +74,7 @@ def triton2arybo(e, use_esf=False):
         v = next(children)
         if isinstance(n, MBAVariable):
             n = n.to_cst()
-        if not isinstance(n, (int,long)):
+        if not isinstance(n, six.integer_types):
             raise ValueError("arithmetic/logical shifts by a symbolic value isn't supported yet.") 
         return shift(v,n)
 
@@ -93,7 +95,7 @@ def triton2arybo(e, use_esf=False):
         n = next(children)
         if isinstance(n, MBAVariable):
             n = n.to_cst()
-        if not isinstance(n, (int,long)):
+        if not isinstance(n, six.integer_types):
             raise ValueError("unsigned division is only supported by a known integer!")
         return a.udiv(n)
 

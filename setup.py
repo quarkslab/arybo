@@ -10,7 +10,8 @@ setup(
     install_requires=[
         "networkx",
         "ipython",
-        "pytanque >= 0.1"
+        "pytanque >= 0.1",
+        "six"
     ],
     classifiers=[
 	'Development Status :: 4 - Beta',
