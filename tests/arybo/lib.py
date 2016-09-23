@@ -9,3 +9,6 @@ class Lib(unittest.TestCase):
         mba_tester = MBATester(mba)
         ret = mba_tester.test_all()
         self.assertTrue(ret)
+
+if __name__ == "__main__":
+    unittest.main()

@@ -26,3 +26,6 @@ class AppTest(unittest.TestCase):
         self.assertIsNotNone(Ainv)
         ident = simplify(Ainv(A(X.vec)))
         self.assertEqual(ident, self.X.vec)
+
+if __name__ == "__main__":
+    unittest.main()

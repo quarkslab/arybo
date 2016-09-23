@@ -52,3 +52,6 @@ class TestMBA(unittest.TestCase):
         xor = xor.simplify()
 
         self.assertEqual(xor, (X^Y))
+
+if __name__ == "__main__":
+    unittest.main()
