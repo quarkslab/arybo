@@ -10,3 +10,5 @@ Arybo reference
    :members:
 
 .. autofunction:: arybo.lib.boolean_expr_solve
+
+.. autofunction:: arybo.tools.triton2arybo

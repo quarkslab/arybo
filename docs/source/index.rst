@@ -11,5 +11,6 @@ Contents:
    usage.rst
    tutorial.rst
    concepts.rst
+   integration.rst
    reference-arybo.rst
    reference-pytanque.rst
