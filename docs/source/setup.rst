@@ -6,7 +6,8 @@ Requirements
 ------------
 
 petanque is compatible with OSX, various flavors of Linux/Unix and Windows.
-Python bindings can be compiled for python 2 or 3.
+Python bindings can be compiled for Python 2 or 3, with the exception of Python
+2 not available under Windows (see below).
 
 Requirements for compiling petanque is clang >= 3.5 or GCC >= 4.9 (under
 Unixes/OSX), and Visual Studio 2015 Update 3 under Windows.
@@ -17,16 +18,16 @@ Under Ubuntu >= 16.04, one can simply do:
 
     $ sudo apt-get install build-essentials g++
 
-Arybo is a Python 2 and 3 library. For now, only petanque can be used as a
+Arybo is a Python 2 and 3 library. For now, only pytanque can be used as a
 backend for handling symbolic boolean expression.
 
 Quick start using pip
 ---------------------
 
-Under OSX/Linux, you first need to check that you have at least clang >= 3.5 or
+Under Linux, you first need to check that you have at least clang >= 3.5 or
 GCC >= 4.9 (see above). 
 
-Then, simply do:
+Then, under Windows/OSX/Linux, simply do:
 
 .. code:: bash
 
@@ -39,11 +40,13 @@ using pip:
 
 .. code:: bash
 
-    $ pip3 install pytanque
+    $ pip install pytanque
 
-Under Windows, binary distributions of pytanque are provided. They have been
-compiled using Visual Studio 2015 Update 3 (see above). You can thus install
-arybo/pytanque using the same commands as above.
+Under OSX and Windows, binary distributions of pytanque are provided.
+
+Please note that pytanque support for Python 2 isn't available under Windows,
+as the official Python 2.7 release is compiled with Visual Studio 2010, which
+can't compile petanque. We are investigating to fix this issue.
 
 Installation from the source using distutils
 --------------------------------------------

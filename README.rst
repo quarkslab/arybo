@@ -18,7 +18,12 @@ Under Linux/OSX/Windows, Arybo can be installed through pip for Python 2 and 3:
 
    $ pip install arybo
 
-You will need at least clang 3.5 or GCC 4.9 to compile the python extension "pytanque".
+Please note that Python 2 support for pytanque under Windows isn't available, as the
+official compiler for Python extensions is Visual Studio 2010, which can't
+compile libpetanque.
+
+You will need at least clang 3.5 or GCC 4.9 to compile the python extension
+"pytanque" under Linux/OS
 
 More details on the installation process can be found here: https://pythonhosted.org/arybo/setup.html
 
