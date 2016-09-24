@@ -22,7 +22,7 @@ module = Extension('pytanque',
                     sources = glob.glob('src/*.cpp') + glob.glob('bindings/python/*.cpp'))
 
 setup (name = 'pytanque',
-    version = '0.1.5',
+    version = '0.2.0',
     description = 'petanque static python bindings',
     author = 'Adrien Guinet',
     author_email = 'aguinet@quarkslab.com',

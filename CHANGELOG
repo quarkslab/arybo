@@ -1,0 +1,14 @@
+CHANGELOG
+=========
+
+O.2.0
+-----
+
+Features:
+
+* Python2 support
+* Triton support
+* New APIs: zext/sext, rol/ror, slice gathering
+
+Bug fixes:
+* Fix pytanque.Matrix constructor w/ lambda function
