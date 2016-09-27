@@ -3,14 +3,14 @@ import random
 import operator
 
 from arybo.lib import MBA, simplify_inplace, expand_esf_inplace
+from arybo.lib.mba_exprs import eval_expr
 from arybo.tools import triton2arybo, triton_available
 
 if triton_available:
     import triton as TT
     import triton.ast as TAst
 
-@unittest.skipIf(triton_available == False, "skipping Triton-related tests as it is not available")
-class TritonTest(unittest.TestCase):
+class TritonTest():
     def setUp(self):
         # Initialize the engine
         TT.setArchitecture(TT.ARCH.X86)
@@ -31,7 +31,14 @@ class TritonTest(unittest.TestCase):
 
     # Helpers
     def astEquals(self, ast, v):
-        self.assertEqual(triton2arybo(ast,use_esf=True), v)
+        if self.use_expr:
+            e = triton2arybo(ast,use_exprs=True,use_esf=False)
+            e = eval_expr(e,use_esf=False)
+            v = expand_esf_inplace(v)
+            v = simplify_inplace(v)
+        else:
+            e = triton2arybo(ast,use_exprs=False,use_esf=True)
+        self.assertEqual(e, v)
 
     # Tests
     def test_leaves(self):
@@ -46,11 +53,11 @@ class TritonTest(unittest.TestCase):
 
     def test_zx_sx(self):
         self.astEquals(
-            TAst.zx(16, TAst.bv(0xff, 8)),
+            TAst.zx(8, TAst.bv(0xff, 8)),
             self.mba16.from_cst(0x00ff))
 
         self.astEquals(
-            TAst.sx(16, TAst.bv(0xff, 8)),
+            TAst.sx(8, TAst.bv(0xff, 8)),
             self.mba16.from_cst(0xffff))
 
     def test_extract_contract(self):
@@ -122,9 +129,21 @@ class TritonTest(unittest.TestCase):
                 TAst.bvadd(self.x8_t, self.y8_t),
                 TAst.bvshl(TAst.bv(1, 8),
                     TAst.bvand(self.x8_t, self.y8_t)))
-        ea = triton2arybo(e,use_esf=True)
+        ea = triton2arybo(e,use_exprs=False,use_esf=True)
         simplify_inplace(expand_esf_inplace(ea))
         self.assertEqual(ea, self.x8^self.y8)
+
+@unittest.skipIf(triton_available == False, "skipping Triton-related tests as it is not available")
+class TritonTestNoExpr(TritonTest, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        unittest.TestCase.__init__(self, *args, **kwargs)
+        self.use_expr = False
+
+@unittest.skipIf(triton_available == False, "skipping Triton-related tests as it is not available")
+class TritonTestExpr(TritonTest, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        unittest.TestCase.__init__(self, *args, **kwargs)
+        self.use_expr = True
 
 if __name__ == "__main__":
     unittest.main()

@@ -27,3 +27,4 @@ import sys
 from arybo.tools.petanque import app_inverse, is_app_inversible, find_esfs
 from arybo.tools.petanque import get_depends, get_depends_as_set
 from arybo.tools.triton_ import triton_available, triton2arybo
+from arybo.tools.identify import identify

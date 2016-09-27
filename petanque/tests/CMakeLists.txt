@@ -1,5 +1,5 @@
 add_library(patests SHARED tests.cpp)
-target_link_libraries(patests petanque)
+target_link_libraries(patests petanque) 
 
 add_executable(op_add op_add.cpp)
 target_link_libraries(op_add patests)
@@ -119,4 +119,5 @@ target_link_libraries(visitors patests)
 add_test(visitors visitors)
 
 add_executable(sorted_vector sorted_vector.cpp)
+target_link_libraries(sorted_vector ${TBB_LIBRARIES})
 add_test(sorted_vector sorted_vector)

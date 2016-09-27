@@ -102,8 +102,9 @@ class MBAVariable(object):
     def __init__(self, mba, arg):
         self.mba = mba
         self.arg = arg
-        self._always_simplify = False
+        self._always_simplify = True
         self._expand_esf = False
+        self.name = None
 
     def __hash__(self):
         return id(self)
@@ -404,7 +405,9 @@ class MBA(MBAImpl):
             ])
         '''
 
-        return self.from_vec(self.var_symbols(name))
+        ret = self.from_vec(self.var_symbols(name)) 
+        ret.name = name
+        return ret
 
     def from_vec(self, v):
         ''' Get an :class:`MBAVariable` object with the vector's values.

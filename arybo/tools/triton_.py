@@ -1,5 +1,6 @@
 import operator
 import six
+from six.moves import reduce
 
 try:
     from triton import AST_NODE as TAstN
@@ -8,13 +9,14 @@ except ImportError:
     triton_available = False
 
 from arybo.lib import MBA, MBAVariable, flatten
+import arybo.lib.mba_exprs as EX 
 
 def _get_mba(n,use_esf):
     mba = MBA(n)
     mba.use_esf = use_esf
     return mba
 
-def triton2arybo(e, use_esf=False):
+def triton2arybo(e, use_exprs=True, use_esf=False):
     ''' Convert a subset of Triton's AST into Arybo's representation
 
     Args:
@@ -26,8 +28,8 @@ def triton2arybo(e, use_esf=False):
     '''
 
     children_ = e.getChilds()
-    children = (triton2arybo(c,use_esf) for c in children_)
-    reversed_children = (triton2arybo(c,use_esf) for c in reversed(children_))
+    children = (triton2arybo(c,use_exprs,use_esf) for c in children_)
+    reversed_children = (triton2arybo(c,use_exprs,use_esf) for c in reversed(children_))
 
     Ty = e.getKind()
     if Ty == TAstN.ZX:
@@ -49,17 +51,26 @@ def triton2arybo(e, use_esf=False):
     if Ty == TAstN.BV:
         cst = next(children)
         nbits = next(children)
-        return _get_mba(nbits,use_esf).from_cst(cst)
+        if use_exprs:
+            return EX.ExprCst(cst, nbits)
+        else:
+            return _get_mba(nbits,use_esf).from_cst(cst)
     if Ty == TAstN.EXTRACT:
         last = next(children)
         first = next(children)
         v = next(children)
         return v[first:last+1]
     if Ty == TAstN.CONCAT:
-        return flatten(reversed_children)
+        if use_exprs:
+            return EX.ExprConcat(*list(reversed_children))
+        else:
+            return flatten(reversed_children)
     if Ty == TAstN.VARIABLE:
         name = e.getValue()
-        return _get_mba(e.getBitvectorSize(),use_esf).var(name)
+        ret = _get_mba(e.getBitvectorSize(),use_esf).var(name)
+        if use_exprs:
+            ret = EX.ExprBV(ret)
+        return ret
 
     # Logical/arithmetic shifts
     shifts = {
@@ -72,7 +83,7 @@ def triton2arybo(e, use_esf=False):
     if not shift is None:
         n = next(children)
         v = next(children)
-        if isinstance(n, MBAVariable):
+        if isinstance(n, (MBAVariable,EX.Expr)):
             n = n.to_cst()
         if not isinstance(n, six.integer_types):
             raise ValueError("arithmetic/logical shifts by a symbolic value isn't supported yet.") 
@@ -88,12 +99,12 @@ def triton2arybo(e, use_esf=False):
         return unop(next(children))
 
     # Binary ops
-    # Division is a special case because we only support division by a known
-    # integer
+    # Division is a special case because we only support division by a known
+    # integer
     if Ty == TAstN.BVUDIV:
         a = next(children)
         n = next(children)
-        if isinstance(n, MBAVariable):
+        if isinstance(n, (MBAVariable,EX.Expr)):
             n = n.to_cst()
         if not isinstance(n, six.integer_types):
             raise ValueError("unsigned division is only supported by a known integer!")
