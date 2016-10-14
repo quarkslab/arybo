@@ -138,12 +138,14 @@ class ExprCst(Expr):
         return self.n
 
     @staticmethod
-    def get_cst(obj):
+    def get_cst(obj,nbits):
         if isinstance(obj, ExprCst):
-            return obj.n
+            ret = obj.n
         if isinstance(obj, six.integer_types):
-            return obj
-        raise ValueError("obj must be an ExprCst or an integer")
+            ret = obj
+        else:
+            raise ValueError("obj must be an ExprCst or an integer")
+        return ExprCst(ret,nbits).n
 
 class ExprBV(Expr):
     def __init__(self, v):
@@ -168,6 +170,10 @@ class ExprUnaryOp(Expr):
     def args(self):
         return [self.arg]
 
+    @args.setter
+    def args(self, args):
+        self.arg = args[0]
+
     @property
     def nbits(self):
         return self.arg.nbits
@@ -184,6 +190,10 @@ class ExprNaryOp(Expr):
     @property
     def args(self):
         return self._args
+
+    @args.setter
+    def args(self, args):
+        self._args = args
 
     @property
     def nbits(self):
@@ -212,6 +222,10 @@ class ExprBinaryOp(Expr):
     @property
     def args(self):
         return [self.X,self.Y]
+
+    @args.setter
+    def args(self, args):
+        self.X,self.Y = args
 
     @property
     def nbits(self):
@@ -269,7 +283,7 @@ class ExprOr(ExprNaryOp):
 class ExprShl(ExprUnaryOp):
     def __init__(self, arg, n):
         super(ExprShl, self).__init__(arg)
-        self.n = ExprCst.get_cst(n)
+        self.n = ExprCst.get_cst(n,self.nbits) 
 
     def eval(self, vec, i, ctx, args, use_esf):
         if i < self.n:
@@ -279,7 +293,7 @@ class ExprShl(ExprUnaryOp):
 class ExprLShr(ExprUnaryOp):
     def __init__(self, arg, n):
         super(ExprLShr, self).__init__(arg)
-        self.n = ExprCst.get_cst(n)
+        self.n = ExprCst.get_cst(n,self.nbits)
 
     def eval(self, vec, i, ctx, args, use_esf):
         if i >= self.nbits-self.n:
@@ -289,7 +303,7 @@ class ExprLShr(ExprUnaryOp):
 class ExprRol(ExprUnaryOp):
     def __init__(self, arg, n):
         super(ExprRol, self).__init__(arg)
-        self.n = ExprCst.get_cst(n)
+        self.n = ExprCst.get_cst(n,self.nbits)
 
     def eval(self, vec, i, ctx, args, use_esf):
         return args[0].eval(vec, (i-self.n)%self.nbits, use_esf)
@@ -297,7 +311,7 @@ class ExprRol(ExprUnaryOp):
 class ExprRor(ExprUnaryOp):
     def __init__(self, arg, n):
         super(ExprRor, self).__init__(arg)
-        self.n = ExprCst.get_cst(n)
+        self.n = ExprCst.get_cst(n,self.nbits)
 
     def eval(self, vec, i, ctx, args, use_esf):
         return args[0].eval(vec, (i+self.n)%self.nbits, use_esf)
@@ -371,8 +385,8 @@ class ExprBroadcast(ExprUnaryOp):
     def __init__(self, arg, idx, nbits):
         super(ExprBroadcast, self).__init__(arg)
         assert(idx >= 0)
-        self.idx = ExprCst.get_cst(idx)
-        self._nbits = ExprCst.get_cst(nbits)
+        self._nbits = ExprCst.get_cst(nbits,64)
+        self.idx = ExprCst.get_cst(idx,arg.nbits)
 
     def init_ctx(self):
         return CtxUninitialized

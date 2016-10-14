@@ -258,7 +258,7 @@ using python_list_value_wrapper = __impl::python_list_ro_wrapper<stl_value_input
 static pa::Expr subs_vectors_exp(pa::Expr const& e, py::list const& vecs, py::list const& values)
 {
 	pa::Expr ret = e;
-	pa::subs_vectors(ret, python_list_ro_wrapper<pa::Vector>(vecs), python_list_ro_wrapper<size_t>(values));
+	pa::subs_vectors(ret, python_list_ro_wrapper<pa::Vector>(vecs), python_list_value_wrapper<uint64_t>(values));
 	return ret;
 }
 
@@ -272,7 +272,7 @@ static pa::Vector subs_vectors_vec(pa::Vector const& v, py::list const& vecs, py
 static pa::Matrix subs_vectors_mat(pa::Matrix const& m, py::list const& vecs, py::list const& values)
 {
 	pa::Matrix ret = m;
-	pa::subs_vectors(ret, python_list_ro_wrapper<pa::Vector>(vecs), python_list_ro_wrapper<size_t>(values));
+	pa::subs_vectors(ret, python_list_ro_wrapper<pa::Vector>(vecs), python_list_value_wrapper<uint64_t>(values));
 	return ret;
 }
 
