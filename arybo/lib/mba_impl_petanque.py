@@ -51,9 +51,9 @@ def next_zero_bit(v):
     v = (v ^ (v - 1)) >> 1
     return popcount(v)
 
-def evaluate_expr(E, nbits, values):
-    vecs = [v.vec for v in values.keys()]
-    values = list(values.values())
+def evaluate_expr(E, nbits, values_):
+    vecs = [v.vec for v in values_.keys()]
+    values = list(values_.values())
     E = expand_esf(E)
     simplify_inplace(E)
     try:
@@ -65,8 +65,9 @@ def evaluate_expr(E, nbits, values):
         for v in vecs:
             vecs_f.extend(v)
         values_f = []
-        for v in values:
-            values_f.extend(v)
+        for vec,v in six.iteritems(values_):
+            v_ = [imm((v>>i)&1) for i in range(vec.nbits)]
+            values_f.extend(v_)
         ret_V = subs_exprs(E, vecs_f, values_f)
         simplify_inplace(ret_V)
         return ret_V
