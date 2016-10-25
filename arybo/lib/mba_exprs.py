@@ -526,6 +526,8 @@ def visit(e, visitor):
             e_try.extend((B for B in cur_ty.__bases__ if not B in (object,Expr,ExprInner)))
     if cb is None:
         cb = getattr(visitor, "visit_Expr")
+    if hasattr(visitor, "visit_wrapper"):
+        return visitor.visit_wrapper(e, cb)
     return cb(e)
 
 # Evaluator

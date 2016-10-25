@@ -1,7 +1,19 @@
 import copy
 import arybo.lib.mba_exprs as EX
 
-class ModifyingPass:
+class CachePass(object):
+    def __init__(self):
+        self.__cache = {}
+
+    def visit_wrapper(self, e, cb):
+        ret = self.__cache.get(id(e), None)
+        if ret is not None:
+            return ret
+        ret = cb(e)
+        self.__cache[id(e)] = ret
+        return ret
+
+class ModifyingPass(CachePass):
     def visit(self, e):
         return EX.visit(e, self)
 

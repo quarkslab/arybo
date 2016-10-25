@@ -54,11 +54,17 @@ class LLVMTest(unittest.TestCase):
         cfunc_type = (int_size_to_type(e.nbits), *(int_size_to_type(a.nbits) for a in args))
         cfunc = CFUNCTYPE(*cfunc_type)(func_ptr)
 
+        print(M)
         for n in range(100):
             args_v = [random.getrandbits(a.nbits) for a in args]
             self.assertEqual(cfunc(*args_v), evale.eval({a: args_v[i] for i,a in enumerate(args)}))
 
         self.engine.remove_module(M)
+
+    def test_tree(self):
+        e0 = EX.ExprXor(self.ex, self.ey)
+        e = EX.ExprAdd(e0,e0)
+        self.check_expr(e, self.args)
 
     def test_binops(self):
         for op in (EX.ExprAdd,EX.ExprSub,EX.ExprMul,EX.ExprOr,EX.ExprXor,EX.ExprAnd):

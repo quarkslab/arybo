@@ -14,13 +14,15 @@ except ImportError:
     llvmlite_available = False
 
 import arybo.lib.mba_exprs as EX
-from arybo.lib.exprs_passes import lower_rol_ror
+from arybo.lib.exprs_passes import lower_rol_ror, CachePass
 import six
 
-class ToLLVMIr(object):
+class ToLLVMIr(CachePass):
     def __init__(self, sym_to_value, IRB):
+        super(ToLLVMIr,self).__init__()
         self.IRB = IRB
         self.sym_to_value = sym_to_value
+        self.values = {}
 
     def visit_Cst(self, e):
         return ll.Constant(ll.IntType(e.nbits), e.n)
