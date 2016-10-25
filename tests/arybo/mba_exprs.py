@@ -11,6 +11,7 @@ from pytanque import expand_esf_inplace, simplify_inplace
 
 class MBAExprsTest:
     def setUp(self):
+        self.mba1 = MBA(1)
         self.mba4 = MBA(4)
         self.mba4.use_esf = False
         self.mba8 = MBA(8)
@@ -155,6 +156,16 @@ class MBAExprsTest:
         self.exprEqual(
             EX.ExprConcat(EX.ExprCst(0xf, 4), EX.ExprCst(0, 4)),
             self.mba8.from_cst(0x0f))
+
+    def test_cmp(self):
+        e = EX.ExprCond(EX.ExprCmpEq(self.x8_expr, EX.ExprCst(10, 8)),
+            self.y8_expr,
+            self.z8_expr)
+
+        e = EX.eval_expr(e)
+        for i in range(256):
+            eref = self.z8 if i != 10 else self.y8
+            self.assertEqual(e.eval({self.x8: i}), eref.vec)
 
 class MBAExprsTestNoEsf(MBAExprsTest, unittest.TestCase):
     def __init__(self, *args, **kwargs):

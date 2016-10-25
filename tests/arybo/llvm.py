@@ -51,10 +51,9 @@ class LLVMTest(unittest.TestCase):
         self.engine.finalize_object()
 
         func_ptr = self.engine.get_function_address(self.func_name)
-        cfunc_type = (int_size_to_type(e.nbits), *(int_size_to_type(a.nbits) for a in args))
+        cfunc_type = (int_size_to_type(e.nbits),) + tuple(int_size_to_type(a.nbits) for a in args)
         cfunc = CFUNCTYPE(*cfunc_type)(func_ptr)
 
-        print(M)
         for n in range(100):
             args_v = [random.getrandbits(a.nbits) for a in args]
             self.assertEqual(cfunc(*args_v), evale.eval({a: args_v[i] for i,a in enumerate(args)}))
@@ -73,7 +72,6 @@ class LLVMTest(unittest.TestCase):
 
     def test_shifts(self):
         for op in (EX.ExprShl,EX.ExprLShr,EX.ExprRor,EX.ExprRol):
-            print(op)
             for n in range(8):
                 e = op(self.ex, n)
                 self.check_expr(e, [self.x])
@@ -90,6 +88,7 @@ class LLVMTest(unittest.TestCase):
             for i in range(8):
                 e = EX.ExprBroadcast(self.ex, i, nbits)
                 self.check_expr(e, [self.x])
+
     def test_not(self):
         e = EX.ExprNot(self.ex)
         self.check_expr(e, [self.x])

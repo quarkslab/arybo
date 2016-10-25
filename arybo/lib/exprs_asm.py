@@ -13,9 +13,11 @@ try:
 except ImportError:
     llvmlite_available = False
 
+import six
+import collections
+
 import arybo.lib.mba_exprs as EX
 from arybo.lib.exprs_passes import lower_rol_ror, CachePass
-import six
 
 class ToLLVMIr(CachePass):
     def __init__(self, sym_to_value, IRB):
@@ -133,21 +135,30 @@ def _create_execution_engine(M, target):
     engine = llvm.create_mcjit_compiler(M, target_machine)
     return engine
 
-def to_llvm_ir(expr, sym_to_value, IRB):
+def to_llvm_ir(exprs, sym_to_value, IRB):
     if not llvmlite_available:
         raise RuntimeError("llvmlite module unavailable! can't assemble to LLVM IR...")
 
-    expr = lower_rol_ror(expr)
+    if not isinstance(exprs, collections.Iterable):
+        exprs = (exprs,)
+
+    ret = None
     visitor = ToLLVMIr(sym_to_value, IRB)
-    return EX.visit(expr, visitor)
+    for e in exprs:
+        e = lower_rol_ror(e)
+        ret = EX.visit(e, visitor)
+    return ret
 
-def to_llvm_function(expr, vars_, name="__arybo"):
+def to_llvm_function(exprs, vars_, name="__arybo"):
     if not llvmlite_available:
         raise RuntimeError("llvmlite module unavailable! can't assemble to LLVM IR...")
+
+    if not isinstance(exprs, collections.Iterable):
+        exprs = (exprs,)
 
     M = ll.Module()
     args_types = [ll.IntType(v.nbits) for v in vars_]
-    fntype = ll.FunctionType(ll.IntType(expr.nbits), args_types)
+    fntype = ll.FunctionType(ll.IntType(exprs[-1].nbits), args_types)
     func = ll.Function(M, fntype, name=name)
     func.attributes.add("nounwind")
     BB = func.append_basic_block()
@@ -160,11 +171,11 @@ def to_llvm_function(expr, vars_, name="__arybo"):
         arg = func.args[i]
         arg.name = v.name
         sym_to_value[v.name] = arg
-    ret = to_llvm_ir(expr, sym_to_value, IRB)
+    ret = to_llvm_ir(exprs, sym_to_value, IRB)
     IRB.ret(ret)
     return M
 
-def asm_module(expr, dst_reg, sym_to_reg, triple_or_target=None):
+def asm_module(exprs, dst_reg, sym_to_reg, triple_or_target=None):
     if not llvmlite_available:
         raise RuntimeError("llvmlite module unavailable! can't assemble...")
 
@@ -182,19 +193,19 @@ def asm_module(expr, dst_reg, sym_to_reg, triple_or_target=None):
 
     sym_to_value = {sym: IRB.load_reg(reg[1], reg[0], reg[0]) for sym,reg in six.iteritems(sym_to_reg)}
 
-    ret = to_llvm_ir(expr, sym_to_value, IRB)
+    ret = to_llvm_ir(exprs, sym_to_value, IRB)
     IRB.store_reg(ret, dst_reg[1], dst_reg[0])
     # See https://llvm.org/bugs/show_bug.cgi?id=15806
     IRB.unreachable()
 
     return M
 
-def asm_binary(expr, dst_reg, sym_to_reg, triple_or_target=None):
+def asm_binary(exprs, dst_reg, sym_to_reg, triple_or_target=None):
     if not llvmlite_available:
         raise RuntimeError("llvmlite module unavailable! can't assemble...")
 
     target = llvm_get_target(triple_or_target)
-    M = asm_module(expr, dst_reg, sym_to_reg, target)
+    M = asm_module(exprs, dst_reg, sym_to_reg, target)
 
     # Use LLVM to compile the '__arybo' function. As the function is naked and
     # is the only, we just got to dump the .text section to get the binary

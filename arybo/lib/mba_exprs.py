@@ -1,3 +1,6 @@
+# TODO: replace ExprInner by passes that replaces the objects by what's needed
+# for arybo
+
 import functools
 import operator
 import six
@@ -138,13 +141,15 @@ class ExprCst(Expr):
         return self.n
 
     @staticmethod
-    def get_cst(obj,nbits):
+    def get_cst(obj,nbits=None):
         if isinstance(obj, ExprCst):
             ret = obj.n
-        if isinstance(obj, six.integer_types):
+        elif isinstance(obj, six.integer_types):
             ret = obj
         else:
             raise ValueError("obj must be an ExprCst or an integer")
+        if nbits is None:
+            return ret
         return ExprCst(ret,nbits).n
 
 class ExprBV(Expr):
@@ -385,7 +390,7 @@ class ExprBroadcast(ExprUnaryOp):
     def __init__(self, arg, idx, nbits):
         super(ExprBroadcast, self).__init__(arg)
         assert(idx >= 0)
-        self._nbits = ExprCst.get_cst(nbits,64)
+        self._nbits = ExprCst.get_cst(nbits)
         self.idx = ExprCst.get_cst(idx,arg.nbits)
 
     def init_ctx(self):
@@ -508,6 +513,97 @@ class ExprDiv(ExprInner, ExprBinaryOp):
                     ExprCst(p, mul_nbits)),
                 slice(0, nbits, 1))
         ExprInner.__init__(self,e)
+
+# Logical expressions (1-bit)
+class ExprLogical(ExprBinaryOp):
+    @property
+    def nbits(self):
+        return 1
+
+    def eval(self, vec, i, ctx, args, use_esf):
+        assert(i == 0)
+        X,Y = args
+        return self.compute_logical(vec, X, Y, ctx, use_esf)
+
+    @staticmethod
+    def compute_logical(vec, X, Y, ctx, use_esf):
+        raise NotImplementedError()
+
+class ExprCmp(ExprLogical):
+    OpEq, OpNeq, OpLt, OpLte, OpGt, OpGte = list(range(6))
+
+    def __init__(self, op, X, Y):
+        super(ExprCmp,self).__init__(X,Y)
+        self.op = op
+
+class ExprCmpEq(ExprCmp):
+    def __init__(self, X, Y):
+        super(ExprCmpEq,self).__init__(ExprCmp.OpEq, X, Y)
+
+    @staticmethod
+    def compute_logical(vec, X, Y, ctx, use_esf):
+        nbits = X.nbits
+        e = imm(1)
+        for i in range(nbits):
+            e *= X.eval(vec, i, use_esf) + Y.eval(vec, i, use_esf) + imm(1)
+            simplify_inplace(e)
+        return e
+
+class ExprCmpNeq(ExprCmp):
+    def __init__(self, X, Y):
+        super(ExprCmpNeq,self).__init__(ExprCmp.OpNeq, X, Y)
+
+    @staticmethod
+    def compute_logical(vec, X, Y, ctx, use_esf):
+        return simplify_inplace(ExprCmpEq.compute_logical(vec,X,Y,ctx,use_esf)+imm(1))
+
+class ExprCmpLt(ExprCmp):
+    def __init__(self, X, Y):
+        super(ExprCmpLt,self).__init__(ExprCmp.OpLt, X, Y)
+
+class ExprCmpLte(ExprCmp):
+    def __init__(self, X, Y):
+        super(ExprCmpLte,self).__init__(ExprCmp.OpLte, X, Y)
+
+class ExprCmpGt(ExprCmp):
+    def __init__(self, X, Y):
+        super(ExprCmpGt,self).__init__(ExprCmp.OpGt, X, Y)
+
+class ExprCmpGte(ExprCmp):
+    def __init__(self, X, Y):
+        super(ExprCmpGte,self).__init__(ExprCmp.OpGte, X, Y)
+
+# Condition operator
+# res = (cond) ? a:b
+
+class ExprCond(ExprInner, Expr):
+    def __init__(self, cond, a, b):
+        if cond.nbits != 1:
+            raise ValueError("condition must be a one-bit expression")
+        self.cond = cond
+        self.a = a
+        self.b = b
+        self._nbits = a.nbits
+        if self._nbits != self.b.nbits:
+            raise ValueError("a and b must have the same number of bits!")
+
+        cond_broadcast = ExprBroadcast(cond, 0, self._nbits)
+        e = ExprXor(
+            ExprAnd(cond_broadcast, self.a),
+            ExprAnd(ExprNot(cond_broadcast), self.b)
+        )
+        ExprInner.__init__(self,e)
+
+    @property
+    def args(self):
+        return [self.cond,self.a,self.b]
+    @args.setter
+    def args(self, args):
+        self.cond,self.a,self.b = args
+
+    @property
+    def nbits(self):
+        return self._nbits
 
 # Generic visitors
 def visit(e, visitor):
