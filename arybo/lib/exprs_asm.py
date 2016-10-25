@@ -19,6 +19,9 @@ import collections
 import arybo.lib.mba_exprs as EX
 from arybo.lib.exprs_passes import lower_rol_ror, CachePass
 
+def IntType(n):
+    return ll.IntType(int(n))
+
 class ToLLVMIr(CachePass):
     def __init__(self, sym_to_value, IRB):
         super(ToLLVMIr,self).__init__()
@@ -27,7 +30,7 @@ class ToLLVMIr(CachePass):
         self.values = {}
 
     def visit_Cst(self, e):
-        return ll.Constant(ll.IntType(e.nbits), e.n)
+        return ll.Constant(IntType(e.nbits), e.n)
 
     def visit_BV(self, e):
         name = e.v.name
@@ -49,20 +52,20 @@ class ToLLVMIr(CachePass):
             EX.ExprLShr: self.IRB.lshr,
         }
         op = ops[type(e)]
-        return op(EX.visit(e.arg, self), ll.Constant(ll.IntType(e.nbits), e.n))
+        return op(EX.visit(e.arg, self), ll.Constant(IntType(e.nbits), e.n))
 
     def visit_ZX(self, e):
-        return self.IRB.zext(EX.visit(e.arg, self), ll.IntType(e.n))
+        return self.IRB.zext(EX.visit(e.arg, self), IntType(e.n))
 
     def visit_SX(self, e):
-        return self.IRB.sext(EX.visit(e.arg, self), ll.IntType(e.n))
+        return self.IRB.sext(EX.visit(e.arg, self), IntType(e.n))
 
     def visit_Concat(self, e):
         # Generate a suite of OR + shifts
         # TODO: pass that lowers concat
         arg0 = e.args[0]
         ret = EX.visit(arg0, self)
-        type_ = ll.IntType(e.nbits)
+        type_ = IntType(e.nbits)
         ret = self.IRB.zext(ret, type_)
         cur_bits = arg0.nbits
         for a in e.args[1:]:
@@ -80,14 +83,14 @@ class ToLLVMIr(CachePass):
         if idxes != list(range(idxes[0], idxes[-1]+1)):
             raise ValueError("slice indexes must be continuous and sorted")
         if idxes[0] != 0:
-            ret = self.IRB.lshr(ret, ll.Constant(ll.IntType(e.arg.nbits), idxes[0]))
-        return self.IRB.trunc(ret, ll.IntType(len(idxes)))
+            ret = self.IRB.lshr(ret, ll.Constant(IntType(e.arg.nbits), idxes[0]))
+        return self.IRB.trunc(ret, IntType(len(idxes)))
 
     def visit_Broadcast(self, e):
         # TODO: pass that lowers broadcast
         # left-shift to get the idx as the MSB, and them use an arithmetic
         # right shift of nbits-1
-        type_ = ll.IntType(e.nbits)
+        type_ = IntType(e.nbits)
         ret = EX.visit(e.arg, self)
         ret = self.IRB.zext(ret, type_)
         ret = self.IRB.shl(ret, ll.Constant(type_, e.nbits-e.idx-1))
@@ -114,6 +117,40 @@ class ToLLVMIr(CachePass):
         }
         op = ops[type(e)]
         return self.visit_nary_args(e, op)
+
+    def visit_Cmp(self, e):
+        f = self.IRB.icmp_signed if e.is_signed else self.IRB.icmp_unsigned
+        cmp_op = {
+            EX.ExprCmp.OpEq:  '==',
+            EX.ExprCmp.OpNeq: '!=',
+            EX.ExprCmp.OpLt:  '<',
+            EX.ExprCmp.OpLte: '<=',
+            EX.ExprCmp.OpGt:  '>',
+            EX.ExprCmp.OpGte: '>='
+        }
+        return f(cmp_op[e.op], EX.visit(e.X, self), EX.visit(e.Y, self))
+
+    def visit_Cond(self, e):
+        cond = EX.visit(e.cond, self)
+        bb_name = self.IRB.basic_block.name
+        ifb = self.IRB.append_basic_block(bb_name + ".if")
+        elseb = self.IRB.append_basic_block(bb_name + ".else")
+        endb = self.IRB.append_basic_block(bb_name + ".endif")
+        self.IRB.cbranch(cond, ifb, elseb)
+
+        self.IRB.position_at_end(ifb)
+        ifv = EX.visit(e.a, self)
+        self.IRB.branch(endb)
+
+        self.IRB.position_at_end(elseb)
+        elsev = EX.visit(e.b, self)
+        self.IRB.branch(endb)
+
+        self.IRB.position_at_end(endb)
+        ret = self.IRB.phi(IntType(e.nbits))
+        ret.add_incoming(ifv, ifb)
+        ret.add_incoming(elsev, elseb)
+        return ret
     
 def llvm_get_target(triple_or_target=None):
     global __llvm_initialized
@@ -157,8 +194,8 @@ def to_llvm_function(exprs, vars_, name="__arybo"):
         exprs = (exprs,)
 
     M = ll.Module()
-    args_types = [ll.IntType(v.nbits) for v in vars_]
-    fntype = ll.FunctionType(ll.IntType(exprs[-1].nbits), args_types)
+    args_types = [IntType(v.nbits) for v in vars_]
+    fntype = ll.FunctionType(IntType(exprs[-1].nbits), args_types)
     func = ll.Function(M, fntype, name=name)
     func.attributes.add("nounwind")
     BB = func.append_basic_block()

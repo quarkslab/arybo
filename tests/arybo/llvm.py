@@ -39,9 +39,7 @@ class LLVMTest(unittest.TestCase):
         self.machine = self.llvm_target.create_target_machine()
         self.engine = llvm.create_mcjit_compiler(llvm.parse_assembly(""), self.machine)
 
-    def check_expr(self, e, args):
-        # Eval 'e'
-        evale = EX.eval_expr(e)
+    def get_c_func(self, e, args):
         # Get the llvm function
         M = to_llvm_function(e,self.args,self.func_name)
         # JIT the function, and compare random values
@@ -53,7 +51,12 @@ class LLVMTest(unittest.TestCase):
         func_ptr = self.engine.get_function_address(self.func_name)
         cfunc_type = (int_size_to_type(e.nbits),) + tuple(int_size_to_type(a.nbits) for a in args)
         cfunc = CFUNCTYPE(*cfunc_type)(func_ptr)
+        return M,cfunc
 
+    def check_expr(self, e, args):
+        M,cfunc = self.get_c_func(e, args)
+        # Eval 'e'
+        evale = EX.eval_expr(e)
         for n in range(100):
             args_v = [random.getrandbits(a.nbits) for a in args]
             self.assertEqual(cfunc(*args_v), evale.eval({a: args_v[i] for i,a in enumerate(args)}))

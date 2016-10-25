@@ -532,9 +532,14 @@ class ExprLogical(ExprBinaryOp):
 class ExprCmp(ExprLogical):
     OpEq, OpNeq, OpLt, OpLte, OpGt, OpGte = list(range(6))
 
-    def __init__(self, op, X, Y):
+    def __init__(self, op, X, Y, is_signed=False):
         super(ExprCmp,self).__init__(X,Y)
         self.op = op
+        self._is_signed = is_signed
+
+    @property
+    def is_signed(self):
+        return self._is_signed
 
 class ExprCmpEq(ExprCmp):
     def __init__(self, X, Y):
@@ -558,20 +563,20 @@ class ExprCmpNeq(ExprCmp):
         return simplify_inplace(ExprCmpEq.compute_logical(vec,X,Y,ctx,use_esf)+imm(1))
 
 class ExprCmpLt(ExprCmp):
-    def __init__(self, X, Y):
-        super(ExprCmpLt,self).__init__(ExprCmp.OpLt, X, Y)
+    def __init__(self, *args, **kwargs):
+        super(ExprCmpLt,self).__init__(ExprCmp.OpLt, *args, **kwargs)
 
 class ExprCmpLte(ExprCmp):
-    def __init__(self, X, Y):
-        super(ExprCmpLte,self).__init__(ExprCmp.OpLte, X, Y)
+    def __init__(self, *args, **kwargs):
+        super(ExprCmpLte,self).__init__(ExprCmp.OpLte, *args, **kwargs)
 
 class ExprCmpGt(ExprCmp):
-    def __init__(self, X, Y):
-        super(ExprCmpGt,self).__init__(ExprCmp.OpGt, X, Y)
+    def __init__(self, *args, **kwargs):
+        super(ExprCmpGt,self).__init__(ExprCmp.OpGt, *args, **kwargs)
 
 class ExprCmpGte(ExprCmp):
-    def __init__(self, X, Y):
-        super(ExprCmpGte,self).__init__(ExprCmp.OpGte, X, Y)
+    def __init__(self, *args, **kwargs):
+        super(ExprCmpGte,self).__init__(ExprCmp.OpGte, *args, **kwargs)
 
 # Condition operator
 # res = (cond) ? a:b
@@ -703,7 +708,7 @@ class PrettyPrinter(object):
         return "sx(%d, %s)" % (e.n, self.visit(e.arg))
     def visit_ZX(self, e):
         return "zx(%d, %s)" % (e.n, self.visit(e.arg))
-    def expr_Slice(self, e):
+    def visit_Slice(self, e):
         idxes = sorted(e.idxes)
         return "%s[%d:%d]" % (self.visit(e.arg), idxes[0], idxes[-1])
     def visit_Concat(self, e):
@@ -719,6 +724,8 @@ class PrettyPrinter(object):
     def visit_NaryOp(self, e):
         ops = {ExprXor: '^', ExprAnd: '&', ExprOr: '|'}
         return self.visit_nary_args(e, ops)
+    def visit_Expr(self, e):
+        raise ValueError("unsupported type %s" % str(type(e)))
 
 def prettyprint(e):
     ret = PrettyPrinter().visit(e)

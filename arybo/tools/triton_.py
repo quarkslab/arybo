@@ -16,20 +16,22 @@ def _get_mba(n,use_esf):
     mba.use_esf = use_esf
     return mba
 
-def triton2arybo(e, use_exprs=True, use_esf=False):
+# TODO: rename to tritonast2arybo
+def triton2arybo(e, use_exprs=True, use_esf=False, context=None):
     ''' Convert a subset of Triton's AST into Arybo's representation
 
     Args:
         e: Triton AST
         use_esf: use ESFs when creating the final expression
+        context: dictionnary that associates Triton expression ID to arybo expressions
 
     Returns:
         An :class:`arybo.lib.MBAVariable` object
     '''
 
     children_ = e.getChilds()
-    children = (triton2arybo(c,use_exprs,use_esf) for c in children_)
-    reversed_children = (triton2arybo(c,use_exprs,use_esf) for c in reversed(children_))
+    children = (triton2arybo(c,use_exprs,use_esf,context) for c in children_)
+    reversed_children = (triton2arybo(c,use_exprs,use_esf,context) for c in reversed(children_))
 
     Ty = e.getKind()
     if Ty == TAstN.ZX:
@@ -70,6 +72,14 @@ def triton2arybo(e, use_exprs=True, use_esf=False):
         ret = _get_mba(e.getBitvectorSize(),use_esf).var(name)
         if use_exprs:
             ret = EX.ExprBV(ret)
+        return ret
+    if Ty == TAstN.REFERENCE:
+        if context is None:
+            raise ValueError("reference node without context can't be resolved")
+        id_ = e.getValue()
+        ret = context.get(id_, None)
+        if ret is None:
+            raise ValueError("expression id %d not found in context" % id_)
         return ret
 
     # Logical/arithmetic shifts
@@ -124,3 +134,14 @@ def triton2arybo(e, use_exprs=True, use_esf=False):
     binop = binops[Ty]
     return reduce(binop, children)
 
+tritonast2arybo = triton2arybo
+
+def tritonexprs2arybo(exprs):
+    context = {}
+    e = None
+    for id_,e in sorted(exprs.items()):
+        if id_ in context:
+            raise ValueError("expression id %d is set multiple times!" % id_)
+        e = tritonast2arybo(e.getAst(), True, False, context)
+        context[id_] = e
+    return e
