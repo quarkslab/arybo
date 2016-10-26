@@ -41,14 +41,14 @@
 #include <algorithm>
 #include <iostream>
 
-bool pa::simps::flatten_no_rec(Expr& expr)
+static bool flatten_no_rec_once(pa::Expr& expr)
 {
 	if (!expr.has_args()) { 
 		return false;
 	}
 	// This could have been created by the user or any passes
 	if (expr.nargs() == 0) {
-		expr.set<ExprImm>(false);
+		expr.set<pa::ExprImm>(false);
 		return true;
 	}
 	if (expr.is_esf()) {
@@ -63,7 +63,7 @@ bool pa::simps::flatten_no_rec(Expr& expr)
 	const pa::expr_type_id type = expr.type();
 	bool has_candidates = false;
 	size_t new_size = 0;
-	for (Expr const& a: expr.args()) {
+	for (pa::Expr const& a: expr.args()) {
 		if (a.type() == type) {
 			new_size += a.nargs();
 			has_candidates = true;
@@ -76,10 +76,10 @@ bool pa::simps::flatten_no_rec(Expr& expr)
 		return false;
 	}
 	if (expr.is_mul() || expr.is_or()) {
-		ExprArgs new_args;
+		pa::ExprArgs new_args;
 		new_args.reserve(new_size);
 		// TODO: hint on the position to use for insert
-		for (Expr& a: expr.args()) {
+		for (pa::Expr& a: expr.args()) {
 			if (a.type() == type) {
 				new_args.insert(std::move(a.args()));
 			}
@@ -92,9 +92,9 @@ bool pa::simps::flatten_no_rec(Expr& expr)
 	}
 	else {
 		assert(expr.is_add());
-		ExprAdd ret;
+		pa::ExprAdd ret;
 		// TODO: hint on the position to use for emplace_arg
-		for (Expr& a: expr.args()) {
+		for (pa::Expr& a: expr.args()) {
 			if (a.type() == type) {
 				ret.extend_args(std::move(a.args()));
 			}
@@ -106,6 +106,18 @@ bool pa::simps::flatten_no_rec(Expr& expr)
 		expr.fix_unary();
 	}
 	return true;
+}
+
+bool pa::simps::flatten_no_rec(Expr& expr)
+{
+	bool changed = false;
+	bool ret;
+	do {
+		ret = flatten_no_rec_once(expr);
+		changed |= ret;
+	}
+	while (ret);
+	return changed;
 }
 
 static void resize_args(pa::Expr& expr, pa::ExprArgs& args, pa::ExprArgs::iterator const it)
@@ -436,6 +448,7 @@ static bool simplify_no_rec(pa::Expr& e)
 		changed |= pa::simps::flatten_no_rec(e);
 		changed |= pa::simps::constants_prop_sorted_no_rec(e);
 		changed |= pa::simps::remove_dead_ops_no_rec(e);
+		changed |= pa::simps::flatten_no_rec(e);
 		exp_changed = pa::simps::expand_no_rec(e);
 		changed |= exp_changed;
 	}
@@ -502,7 +515,7 @@ static bool simplify_rec(pa::Expr& e)
 		return false;
 	}
 
-	assert(std::is_sorted(e.args().begin(), e.args().end()));
+	assert(std::is_sorted(e.args().cbegin(), e.args().cend()));
 
 	bool changed = false;
 	for (pa::Expr& a: e.args()) {
@@ -552,6 +565,7 @@ pa::Vector& pa::simps::expand_esf(Vector& v)
 
 pa::Expr& pa::simps::simplify(Expr& e)
 {
+	sort(e);
 	simplify_rec(e);
 	//expand_esf_rec(e);
 	//simplify_rec(e);

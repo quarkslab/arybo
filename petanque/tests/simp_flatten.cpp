@@ -53,7 +53,7 @@ int main()
 	{
 		Expr exp = ExprAdd({ExprAdd({a, c ,e ,a, b}), ExprAdd({a, d, e, a, b}), ExprAdd({b, c, e, a, b}), ExprAdd({b, d, e, a, b})});
 		simps::flatten(exp);
-		ret |= check_expr("(a+c+e+a+b) + (a+d+e+a+b) + (b+c+e+a+b) + (b+d+e+a+b)", exp, ExprAdd({}));
+		ret |= check_expr("(a+c+e+a+b) + (a+d+e+a+b) + (b+c+e+a+b) + (b+d+e+a+b)", exp, ExprImm{false});
 	}
 
 	{
