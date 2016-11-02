@@ -48,6 +48,31 @@ Please note that pytanque support for Python 2 isn't available under Windows,
 as the official Python 2.7 release is compiled with Visual Studio 2010, which
 can't compile petanque. We are investigating to fix this issue.
 
+Notes for Ubuntu 14.04
+~~~~~~~~~~~~~~~~~~~~~~
+
+Ubuntu 14.04 is shipped with GCC 4.8, which does not support some C++14
+features libpetanque is using.
+
+Fortunately, a PPA allows to install GCC 6 and a more recent libstdc++.
+To install pytanque through pip under Ubuntu 14.04, follow these instructions:
+
+.. code:: bash
+
+    $ sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+    $ sudo apt-get update
+    $ sudo apt-get install g++-6
+    $ CC=gcc-6 CXX=g++-6 pip install pytanque
+
+This will add the necessary PPA, install GCC 6 and compile the pytanque Python
+bindings using GCC 6.
+
+You can then install arybo through pip:
+
+.. code:: bash
+
+    $ pip install arybo
+
 Installation from the source using distutils
 --------------------------------------------
 

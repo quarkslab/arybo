@@ -23,7 +23,11 @@ official compiler for Python extensions is Visual Studio 2010, which can't
 compile libpetanque.
 
 You will need at least clang 3.5 or GCC 4.9 to compile the python extension
-"pytanque" under Linux/OS
+"pytanque" under Linux/OS.
+
+Users of Ubuntu 14.04 need to install GCC 6. See the documentation for detailed
+instructions:
+https://github.com/quarkslab/arybo/blob/master/docs/source/setup.rst#notes-for-ubuntu-1404.
 
 More details on the installation process can be found here: https://pythonhosted.org/arybo/setup.html
 
