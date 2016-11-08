@@ -246,6 +246,7 @@ class MBAImpl(object):
         return ret
 
     def mul_n_org(self, X, n):
+        n = n & self.max_uint
         ret = Vector(self.nbits)
         i = 0
         while n > 0:
@@ -261,6 +262,7 @@ class MBAImpl(object):
         ret = Vector(self.nbits)
         if (n == 0):
             return ret
+        n = n & self.max_uint
         i = 0
         final_sum = 0
         not_x = None
