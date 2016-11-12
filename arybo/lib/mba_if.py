@@ -182,6 +182,8 @@ class MBAVariable(object):
         return self.__mul__(o)
 
     def udiv(self, o):
+        if not isinstance(o, six.integer_types):
+            o = o.to_cst()
         return self.__call_op('div', o)
 
     def __truediv__(self, o):
@@ -206,9 +208,13 @@ class MBAVariable(object):
         return self.__or__(o)
 
     def __lshift__(self, o):
+        if not isinstance(o, six.integer_types):
+            o = o.to_cst()
         return self.__call_op('lshift', o)
 
     def __rshift__(self, o):
+        if not isinstance(o, six.integer_types):
+            o = o.to_cst()
         return self.__call_op('rshift', o)
 
     def __invert__(self):

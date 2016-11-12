@@ -97,32 +97,32 @@ class MBAExprsTest:
     def test_rotate_binop(self):
         E0 = EX.ExprRor(
             EX.ExprAdd(self.x4_expr, self.y4_expr),
-            1)
+            EX.ExprCst(1, 4))
         self.exprEqual(E0, (self.x4+self.y4).ror(1))
 
         E0 = EX.ExprRor(
             EX.ExprSub(self.x4_expr, self.y4_expr),
-            1)
+            EX.ExprCst(1, 4))
         self.exprEqual(E0, (self.x4-self.y4).ror(1))
 
         E0 = EX.ExprRor(
             EX.ExprMul(self.x4_expr, self.y4_expr),
-            1)
+            EX.ExprCst(1, 4))
         self.exprEqual(E0, (self.x4*self.y4).ror(1))
 
         E0 = EX.ExprRol(
             EX.ExprAdd(self.x4_expr, self.y4_expr),
-            1)
+            EX.ExprCst(1, 4))
         self.exprEqual(E0, (self.x4+self.y4).rol(1))
 
         E0 = EX.ExprRol(
             EX.ExprSub(self.x4_expr, self.y4_expr),
-            1)
+            EX.ExprCst(1, 4))
         self.exprEqual(E0, (self.x4-self.y4).rol(1))
 
         E0 = EX.ExprRol(
             EX.ExprMul(self.x4_expr, self.y4_expr),
-            1)
+            EX.ExprCst(1, 4))
         self.exprEqual(E0, (self.x4*self.y4).rol(1))
 
     def test_logical(self):
@@ -136,7 +136,7 @@ class MBAExprsTest:
         for op in ops:
             for s in range(5):
                 self.exprEqual(
-                    op[0](self.x4_expr, s),
+                    op[0](self.x4_expr, EX.ExprCst(s, 4)),
                     op[1](self.x4, s))
 
     def test_zx_sx(self):

@@ -9,7 +9,7 @@ except ImportError:
     triton_available = False
 
 from arybo.lib import MBA, MBAVariable, flatten
-import arybo.lib.mba_exprs as EX 
+import arybo.lib.mba_exprs as EX
 
 def _get_mba(n,use_esf):
     mba = MBA(n)
@@ -81,44 +81,43 @@ def triton2arybo(e, use_exprs=True, use_esf=False, context=None):
         if ret is None:
             raise ValueError("expression id %d not found in context" % id_)
         return ret
+    if Ty == TAstN.LET:
+        # Alias
+        # djo: "c'est pas utilise osef"
+        raise ValueError("unsupported LET operation")
 
     # Logical/arithmetic shifts
     shifts = {
         TAstN.BVLSHR: operator.rshift,
         TAstN.BVSHL:  operator.lshift,
-        TAstN.BVROL:  lambda x,n: x.rol(n),
-        TAstN.BVROR:  lambda x,n: x.ror(n)
     }
     shift = shifts.get(Ty, None)
     if not shift is None:
+        v = next(children)
+        n = next(children)
+        return shift(v,n)
+    # We need to separate rotate shifts from the others because the triton API
+    # is different for this one... (no comment)
+    rshifts = {
+        TAstN.BVROL:  lambda x,n: x.rol(n),
+        TAstN.BVROR:  lambda x,n: x.ror(n)
+    }
+    rshift = rshifts.get(Ty, None)
+    if not rshift is None:
+        # Notice the order here compared to above...
         n = next(children)
         v = next(children)
-        if isinstance(n, (MBAVariable,EX.Expr)):
-            n = n.to_cst()
-        if not isinstance(n, six.integer_types):
-            raise ValueError("arithmetic/logical shifts by a symbolic value isn't supported yet.") 
-        return shift(v,n)
+        return rshift(v,n)
 
     # Unary op
     unops = {
         TAstN.BVNOT: lambda x: ~x,
+        TAstN.LNOT:  lambda x: ~x,
         TAstN.BVNEG: operator.neg
     }
     unop = unops.get(Ty, None)
     if unop != None:
         return unop(next(children))
-
-    # Binary ops
-    # Division is a special case because we only support division by a known
-    # integer
-    if Ty == TAstN.BVUDIV:
-        a = next(children)
-        n = next(children)
-        if isinstance(n, (MBAVariable,EX.Expr)):
-            n = n.to_cst()
-        if not isinstance(n, six.integer_types):
-            raise ValueError("unsigned division is only supported by a known integer!")
-        return a.udiv(n)
 
     binops = {
         TAstN.BVADD:  operator.add,
@@ -130,9 +129,36 @@ def triton2arybo(e, use_exprs=True, use_esf=False, context=None):
         TAstN.BVNAND: lambda x,y: ~(x&y),
         TAstN.BVNOR:  lambda x,y: ~(x|y),
         TAstN.BVXNOR: lambda x,y: ~(x^y),
+        TAstN.BVUDIV: lambda x,y: x.udiv(y),
+        TAstN.BVSDIV: lambda x,y: x.sdiv(y),
+        TAstN.LAND:   operator.and_,
+        TAstN.LOR:    operator.or_
     }
-    binop = binops[Ty]
-    return reduce(binop, children)
+    binop = binops.get(Ty, None)
+    if binop != None:
+        return reduce(binop, children)
+
+    # Logical op
+    lops = {
+        TAstN.EQUAL:    lambda x,y: EX.ExprCmpEq(x,y),
+        TAstN.DISTINCT: lambda x,y: EX.ExprCmpNeq(x,y),
+        TAstN.BVUGE:    lambda x,y: EX.ExprCmpGte(x,y,False),
+        TAstN.BVUGT:    lambda x,y: EX.ExprCmpGt(x,y,False),
+        TAstN.BVULE:    lambda x,y: EX.ExprCmpLte(x,y,False),
+        TAstN.BVULT:    lambda x,y: EX.ExprCmpLt(x,y,False),
+        TAstN.BVSGE:    lambda x,y: EX.ExprCmpGte(x,y,True),
+        TAstN.BVSGT:    lambda x,y: EX.ExprCmpGt(x,y,True),
+        TAstN.BVSLE:    lambda x,y: EX.ExprCmpLte(x,y,True),
+        TAstN.BVSLT:    lambda x,y: EX.ExprCmpLt(x,y,True)
+    }
+    lop = lops.get(Ty, None)
+    if lop != None:
+        return reduce(lop, children)
+
+    # Conditional
+    if Ty != TAstN.ITE:
+        raise ValueError("unsupported node type %s" % str(Ty))
+    return EX.ExprCond(next(children), next(children), next(children))
 
 tritonast2arybo = triton2arybo
 

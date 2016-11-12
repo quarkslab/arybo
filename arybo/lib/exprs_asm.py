@@ -46,14 +46,6 @@ class ToLLVMIr(CachePass):
     def visit_Not(self, e):
         return self.IRB.not_(EX.visit(e.arg, self))
 
-    def visit_UnaryOp(self, e):
-        ops = {
-            EX.ExprShl: self.IRB.shl,
-            EX.ExprLShr: self.IRB.lshr,
-        }
-        op = ops[type(e)]
-        return op(EX.visit(e.arg, self), ll.Constant(IntType(e.nbits), e.n))
-
     def visit_ZX(self, e):
         return self.IRB.zext(EX.visit(e.arg, self), IntType(e.n))
 
@@ -104,7 +96,9 @@ class ToLLVMIr(CachePass):
             EX.ExprAdd: self.IRB.add,
             EX.ExprSub: self.IRB.sub,
             EX.ExprMul: self.IRB.mul,
-            EX.ExprDiv: self.IRB.udiv
+            EX.ExprDiv: self.IRB.udiv,
+            EX.ExprShl: self.IRB.shl,
+            EX.ExprLShr: self.IRB.lshr
         }
         op = ops[type(e)]
         return self.visit_nary_args(e, op)

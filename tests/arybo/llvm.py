@@ -76,7 +76,7 @@ class LLVMTest(unittest.TestCase):
     def test_shifts(self):
         for op in (EX.ExprShl,EX.ExprLShr,EX.ExprRor,EX.ExprRol):
             for n in range(8):
-                e = op(self.ex, n)
+                e = op(self.ex, EX.ExprCst(n, 8))
                 self.check_expr(e, [self.x])
 
     def test_concat_slice(self):

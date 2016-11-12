@@ -85,11 +85,11 @@ class Expr(object):
         return ExprOr(o, self)
 
     def __lshift__(self, o):
-        self.__check_arg_int(o)
+        o = self.__parse_arg(o)
         return ExprShl(self, o)
 
     def __rshift__(self, o):
-        self.__check_arg_int(o)
+        o = self.__parse_arg(o)
         return ExprLShr(self, o)
 
     def __neg__(self):
@@ -106,17 +106,21 @@ class Expr(object):
         self.__check_arg_int(n)
         return ExprSX(self,n)
 
-    def rol(self,n):
-        self.__check_arg_int(n)
-        return ExprRol(self,n)
+    def rol(self,o):
+        o = self.__parse_arg(o)
+        return ExprRol(self,o)
 
-    def ror(self,n):
-        self.__check_arg_int(n)
-        return ExprRor(self,n)
+    def ror(self,o):
+        o = self.__parse_arg(o)
+        return ExprRor(self,o)
 
     def udiv(self,o):
         o = self.__parse_arg(o)
-        return ExprDiv(self, o)
+        return ExprDiv(self, o, is_signed=False)
+
+    def sdiv(self,o):
+        o = self.__parse_arg(o)
+        return ExprDiv(self, o, is_signed=True)
 
     def __getitem__(self,s):
         if not isinstance(s, slice):
@@ -285,38 +289,38 @@ class ExprOr(ExprNaryOp):
         return ret
 
 # Binary shifts
-class ExprShl(ExprUnaryOp):
-    def __init__(self, arg, n):
-        super(ExprShl, self).__init__(arg)
-        self.n = ExprCst.get_cst(n,self.nbits) 
+class ExprShl(ExprBinaryOp):
+    @property
+    def n(self):
+        return ExprCst.get_cst(self.Y, self.nbits)
 
     def eval(self, vec, i, ctx, args, use_esf):
         if i < self.n:
             return imm(False)
         return args[0].eval(vec, i-self.n, use_esf)
 
-class ExprLShr(ExprUnaryOp):
-    def __init__(self, arg, n):
-        super(ExprLShr, self).__init__(arg)
-        self.n = ExprCst.get_cst(n,self.nbits)
+class ExprLShr(ExprBinaryOp):
+    @property
+    def n(self):
+        return ExprCst.get_cst(self.Y, self.nbits)
 
     def eval(self, vec, i, ctx, args, use_esf):
         if i >= self.nbits-self.n:
             return imm(False)
         return args[0].eval(vec, i+self.n, use_esf)
 
-class ExprRol(ExprUnaryOp):
-    def __init__(self, arg, n):
-        super(ExprRol, self).__init__(arg)
-        self.n = ExprCst.get_cst(n,self.nbits)
+class ExprRol(ExprBinaryOp):
+    @property
+    def n(self):
+        return ExprCst.get_cst(self.Y, self.nbits)
 
     def eval(self, vec, i, ctx, args, use_esf):
         return args[0].eval(vec, (i-self.n)%self.nbits, use_esf)
 
-class ExprRor(ExprUnaryOp):
-    def __init__(self, arg, n):
-        super(ExprRor, self).__init__(arg)
-        self.n = ExprCst.get_cst(n,self.nbits)
+class ExprRor(ExprBinaryOp):
+    @property
+    def n(self):
+        return ExprCst.get_cst(self.Y, self.nbits)
 
     def eval(self, vec, i, ctx, args, use_esf):
         return args[0].eval(vec, (i+self.n)%self.nbits, use_esf)
@@ -484,35 +488,39 @@ class ExprMul(ExprInner, ExprBinaryOp):
         for i in range(1, nbits):
             e = ExprAdd(
                 e,
-                ExprAnd(ExprShl(X, i), ExprBroadcast(Y, i, nbits)))
+                ExprAnd(ExprShl(X, ExprCst(i,nbits)), ExprBroadcast(Y, i, nbits)))
         ExprInner.__init__(self,e)
 
 class ExprDiv(ExprInner, ExprBinaryOp):
-    def __init__(self, X, n):
+    def __init__(self, X, n, is_signed=False):
         ExprBinaryOp.__init__(self,X,n)
         nbits = X.nbits
-        # TODO: assert nbits == n.nbits
+        self._is_signed = is_signed
 
-        if not isinstance(n, ExprCst):
-            raise ValueError("only a division by a known constant is supported!")
-        n = n.n
-        nc = ((2**nbits)/n)*n - 1
-        for p in range(nbits, 2*self.nbits+1):
-            if(2**p > nc*(n - 1 - ((2**p - 1) % n))):
-                break
-        else:
-            raise RuntimeError("division: unable to find the shifting count")
-        m = (2**p + n - 1 - ((2**p - 1) % n))//n
+        # Arybo specific
+        if isinstance(n, ExprCst) and not self._is_signed:
+            n = ExprCst.get_cst(n,self.nbits)
+            nc = ((2**nbits)/n)*n - 1
+            for p in range(nbits, 2*self.nbits+1):
+                if(2**p > nc*(n - 1 - ((2**p - 1) % n))):
+                    break
+            else:
+                raise RuntimeError("division: unable to find the shifting count")
+            m = (2**p + n - 1 - ((2**p - 1) % n))//n
 
-        mul_nbits = 2*nbits+1
-        e = ExprSlice(
-                ExprLShr(
-                    ExprMul(
-                        ExprZX(X, mul_nbits),
-                        ExprCst(m, mul_nbits)),
-                    ExprCst(p, mul_nbits)),
-                slice(0, nbits, 1))
-        ExprInner.__init__(self,e)
+            mul_nbits = 2*nbits+1
+            e = ExprSlice(
+                    ExprLShr(
+                        ExprMul(
+                            ExprZX(X, mul_nbits),
+                            ExprCst(m, mul_nbits)),
+                        ExprCst(p, mul_nbits)),
+                    slice(0, nbits, 1))
+            ExprInner.__init__(self,e)
+
+        @property
+        def is_signed(self):
+            return self._is_signed
 
 # Logical expressions (1-bit)
 class ExprLogical(ExprBinaryOp):

@@ -110,7 +110,7 @@ class TritonTest():
         for op in ops:
             for s in range(9):
                 self.astEquals(
-                    op[0](TAst.bv(s, 8), self.x8_t),
+                    op[0](self.x8_t, TAst.bv(s, 8)),
                     op[1](self.x8, s))
 
         ops = (
@@ -127,11 +127,16 @@ class TritonTest():
         # x^y = (x+y) - ((x&y)<<1)
         e = TAst.bvsub(
                 TAst.bvadd(self.x8_t, self.y8_t),
-                TAst.bvshl(TAst.bv(1, 8),
-                    TAst.bvand(self.x8_t, self.y8_t)))
+                TAst.bvshl(TAst.bvand(self.x8_t, self.y8_t), TAst.bv(1, 8)))
         ea = triton2arybo(e,use_exprs=False,use_esf=True)
         simplify_inplace(expand_esf_inplace(ea))
         self.assertEqual(ea, self.x8^self.y8)
+
+    def test_logical(self):
+        e = TAst.equal(self.x8_t, self.y8_t)
+        ea = triton2arybo(e,use_exprs=True,use_esf=False)
+        ea = eval_expr(ea,use_esf=False)
+        self.assertEqual(ea.nbits, 1)
 
 @unittest.skipIf(triton_available == False, "skipping Triton-related tests as it is not available")
 class TritonTestNoExpr(TritonTest, unittest.TestCase):

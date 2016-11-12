@@ -27,24 +27,30 @@ class ModifyingPass(CachePass):
 
 class LowerRolRor(ModifyingPass):
     def visit_Rol(self, e):
-        n = e.n
-        arg = self.visit(e.arg)
+        n = e.Y
+        if not isinstance(n, EX.ExprCst):
+            raise ValueError("only ror with a known constant is supported")
+        n = n.n
+        arg = self.visit(e.X)
         if n == 0:
             return arg
         nbits = arg.nbits
         return EX.ExprXor(
-            EX.ExprShl(arg, n),
-            EX.ExprLShr(arg, nbits-n))
+            EX.ExprShl(arg, EX.ExprCst(n, nbits)),
+            EX.ExprLShr(arg, EX.ExprCst(nbits-n, nbits)))
 
     def visit_Ror(self, e):
-        n = e.n
-        arg = self.visit(e.arg)
+        n = e.Y
+        if not isinstance(n, EX.ExprCst):
+            raise ValueError("only ror with a known constant is supported")
+        n = n.n
+        arg = self.visit(e.X)
         if n == 0:
             return arg
         nbits = arg.nbits
         return EX.ExprXor(
-            EX.ExprShl(arg, nbits-n),
-            EX.ExprLShr(arg, n))
+            EX.ExprShl(arg, EX.ExprCst(nbits-n, nbits)),
+            EX.ExprLShr(arg, EX.ExprCst(n, nbits)))
 
 def wrap_pass(cls):
     def f(e):
