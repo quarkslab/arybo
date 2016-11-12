@@ -60,13 +60,16 @@ def evaluate_expr(E, nbits, values_):
         ret_V = subs_vectors(E, vecs, values)
         simplify_inplace(ret_V)
         return ret_V.get_int_be()
-    except RuntimeError:
+    except RuntimeError as e:
         vecs_f = []
         for v in vecs:
             vecs_f.extend(v)
         values_f = []
         for vec,v in six.iteritems(values_):
-            v_ = [imm((v>>i)&1) for i in range(vec.nbits)]
+            if isinstance(v, six.integer_types):
+                v_ = [imm((v>>i)&1) for i in range(vec.nbits)]
+            else:
+                v_ = v
             values_f.extend(v_)
         ret_V = subs_exprs(E, vecs_f, values_f)
         simplify_inplace(ret_V)
