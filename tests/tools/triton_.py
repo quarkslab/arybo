@@ -4,7 +4,7 @@ import operator
 
 from arybo.lib import MBA, simplify_inplace, expand_esf_inplace
 from arybo.lib.mba_exprs import eval_expr
-from arybo.tools import triton2arybo, triton_available
+from arybo.tools import tritonast2arybo, tritonexprs2arybo, triton_available
 
 if triton_available:
     import triton as TT
@@ -32,12 +32,12 @@ class TritonTest():
     # Helpers
     def astEquals(self, ast, v):
         if self.use_expr:
-            e = triton2arybo(ast,use_exprs=True,use_esf=False)
+            e = tritonast2arybo(ast,use_exprs=True,use_esf=False)
             e = eval_expr(e,use_esf=False)
             v = expand_esf_inplace(v)
             v = simplify_inplace(v)
         else:
-            e = triton2arybo(ast,use_exprs=False,use_esf=True)
+            e = tritonast2arybo(ast,use_exprs=False,use_esf=True)
         self.assertEqual(e, v)
 
     # Tests
@@ -128,15 +128,106 @@ class TritonTest():
         e = TAst.bvsub(
                 TAst.bvadd(self.x8_t, self.y8_t),
                 TAst.bvshl(TAst.bvand(self.x8_t, self.y8_t), TAst.bv(1, 8)))
-        ea = triton2arybo(e,use_exprs=False,use_esf=True)
+        ea = tritonast2arybo(e,use_exprs=False,use_esf=True)
         simplify_inplace(expand_esf_inplace(ea))
         self.assertEqual(ea, self.x8^self.y8)
 
     def test_logical(self):
         e = TAst.equal(self.x8_t, self.y8_t)
-        ea = triton2arybo(e,use_exprs=True,use_esf=False)
+        ea = tritonast2arybo(e,use_exprs=True,use_esf=False)
         ea = eval_expr(ea,use_esf=False)
         self.assertEqual(ea.nbits, 1)
+
+    def test_exprs_xor_5C(self):
+        # Based on djo's example
+        
+        # This is the xor_5C example compiled with optimisations for x86-4
+        code = [
+        "\x41\xB8\xE5\xFF\xFF\xFF",
+        "\x89\xF8",
+        "\xBA\x26\x00\x00\x00",
+        "\x41\x0F\xAF\xC0",
+        "\xB9\xED\xFF\xFF\xFF",
+        "\x89\xC7",
+        "\x89\xD0",
+        "\x83\xEF\x09",
+        "\x0F\xAF\xC7",
+        "\x89\xC2",
+        "\x89\xF8",
+        "\x0F\xAF\xC1",
+        "\xB9\x4B\x00\x00\x00",
+        "\x8D\x44\x02\x2A",
+        "\x0F\xB6\xC0",
+        "\x89\xC2",
+        "\xF7\xDA",
+        "\x8D\x94\x12\xFF\x00\x00\x00",
+        "\x81\xE2\xFE\x00\x00\x00",
+        "\x01\xD0",
+        "\x8D\x14\x00",
+        "\x8D\x54\x02\x4D",
+        "\x0F\xB6\xF2",
+        "\x6B\xF6\x56",
+        "\x83\xC6\x24",
+        "\x83\xE6\x46",
+        "\x89\xF0",
+        "\x0F\xAF\xC1",
+        "\xB9\xE7\xFF\xFF\xFF",
+        "\x89\xC6",
+        "\x89\xD0",
+        "\xBA\x3A\x00\x00\x00",
+        "\x0F\xAF\xC1",
+        "\x89\xC1",
+        "\x89\xD0",
+        "\x8D\x4C\x0E\x76",
+        "\xBE\x63\x00\x00\x00",
+        "\x0F\xAF\xC1",
+        "\x89\xC2",
+        "\x89\xC8",
+        "\x0F\xAF\xC6",
+        "\x83\xEA\x51",
+        "\xBE\x2D\x00\x00\x00",
+        "\x83\xE2\xF4",
+        "\x89\xC1",
+        "\x8D\x4C\x0A\x2E",
+        "\x89\xC8",
+        "\x25\x94\x00\x00\x00",
+        "\x01\xC0",
+        "\x29\xC8",
+        "\xB9\x67\x00\x00\x00",
+        "\x0F\xAF\xC1",
+        "\x8D\x48\x0D",
+        "\x0F\xB6\xD1",
+        "\x69\xD2\xAE\x00\x00\x00",
+        "\x83\xCA\x22",
+        "\x89\xD0",
+        "\x41\x0F\xAF\xC0",
+        "\x89\xC2",
+        "\x89\xC8",
+        "\x0F\xAF\xC6",
+        "\x8D\x44\x02\xC2",
+        "\x0F\xB6\xC0",
+        "\x2D\xF7\x00\x00\x00",
+        "\x69\xC0\xED\x00\x00\x00",
+        "\x0F\xB6\xC0",
+        ]
+
+        TT.setArchitecture(TT.ARCH.X86_64)
+
+        rdi = TT.convertRegisterToSymbolicVariable(TT.REG.RDI)
+        rdi = tritonast2arybo(TAst.variable(rdi),use_exprs=False)
+
+        for opcodes in code:
+            inst = TT.Instruction(opcodes)
+            TT.processing(inst)
+
+        rax_ast = TT.buildSymbolicRegister(TT.REG.RAX)
+        rax_ast = TT.getFullAst(rax_ast)
+        rax_ast = TT.simplify(rax_ast, True)
+        # Check that this gives a xor 5C
+        e = tritonast2arybo(rax_ast,use_exprs=self.use_expr,use_esf=False)
+        if self.use_expr:
+            e = eval_expr(e)
+        self.assertEqual(e, ((rdi&0xff)^0x5C).vec)
 
 @unittest.skipIf(triton_available == False, "skipping Triton-related tests as it is not available")
 class TritonTestNoExpr(TritonTest, unittest.TestCase):

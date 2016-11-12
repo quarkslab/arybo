@@ -16,8 +16,7 @@ def _get_mba(n,use_esf):
     mba.use_esf = use_esf
     return mba
 
-# TODO: rename to tritonast2arybo
-def triton2arybo(e, use_exprs=True, use_esf=False, context=None):
+def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
     ''' Convert a subset of Triton's AST into Arybo's representation
 
     Args:
@@ -30,8 +29,8 @@ def triton2arybo(e, use_exprs=True, use_esf=False, context=None):
     '''
 
     children_ = e.getChilds()
-    children = (triton2arybo(c,use_exprs,use_esf,context) for c in children_)
-    reversed_children = (triton2arybo(c,use_exprs,use_esf,context) for c in reversed(children_))
+    children = (tritonast2arybo(c,use_exprs,use_esf,context) for c in children_)
+    reversed_children = (tritonast2arybo(c,use_exprs,use_esf,context) for c in reversed(children_))
 
     Ty = e.getKind()
     if Ty == TAstN.ZX:
@@ -159,8 +158,6 @@ def triton2arybo(e, use_exprs=True, use_esf=False, context=None):
     if Ty != TAstN.ITE:
         raise ValueError("unsupported node type %s" % str(Ty))
     return EX.ExprCond(next(children), next(children), next(children))
-
-tritonast2arybo = triton2arybo
 
 def tritonexprs2arybo(exprs):
     context = {}
