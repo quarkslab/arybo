@@ -222,10 +222,10 @@ def asm_module(exprs, dst_reg, sym_to_reg, triple_or_target=None):
     IRB = ll.IRBuilder()
     IRB.position_at_end(BB)
 
-    sym_to_value = {sym: IRB.load_reg(reg[1], reg[0], reg[0]) for sym,reg in six.iteritems(sym_to_reg)}
+    sym_to_value = {sym: IRB.load_reg(IntType(reg[1]), reg[0], reg[0]) for sym,reg in six.iteritems(sym_to_reg)}
 
     ret = to_llvm_ir(exprs, sym_to_value, IRB)
-    IRB.store_reg(ret, dst_reg[1], dst_reg[0])
+    IRB.store_reg(ret, IntType(dst_reg[1]), dst_reg[0])
     # See https://llvm.org/bugs/show_bug.cgi?id=15806
     IRB.unreachable()
 
