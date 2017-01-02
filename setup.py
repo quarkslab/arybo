@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="arybo",
-    version="0.2.0",
+    version="1.0.0",
     author="Adrien Guinet",
     author_email="aguinet@quarkslab.com",
     description="Manipulation, canonicalization and identification of mixed boolean-arithmetic symbolic expressions",
@@ -10,7 +10,7 @@ setup(
     install_requires=[
         "networkx",
         "ipython",
-        "pytanque >= 0.1",
+        "pytanque >= 1.0",
         "six"
     ],
     classifiers=[
