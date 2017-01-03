@@ -6,7 +6,15 @@ import sys
 
 from arybo.lib import MBA, expr_contains, expand_esf, expand_esf_inplace, simplify, simplify_inplace, boolean_expr_solve, flatten
 from arybo.lib.mba_exprs import prettyprint
+from arybo.lib.exprs_asm import llvmlite_available
 from arybo.tools import app_inverse, is_app_inversible, find_esfs, identify
+
+if llvmlite_available:
+    from arybo.lib.exprs_asm import asm_module,asm_binary
+else:
+    print("WARNING: llvmlite support isn't available. Expression assembly will \
+be disabled. See http://pythonhosted.org/arybo/setup.html#llvmlite-support \
+for more information")
 
 from pytanque import symbol, imm, Vector, Matrix, analyses, esf
 
