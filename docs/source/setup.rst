@@ -148,8 +148,8 @@ Then, you can launch the ``iarybo`` script:
   > cd \path\to\arybo
   > python bin\iarybo
 
-Windows support (LLVM)
-----------------------
+LLVM Windows support
+~~~~~~~~~~~~~~~~~~~~
 
 We tried to compile petanque using Clang/LLVM 3.8.1. The petanque library
 can be compiled, but the pytanque bindings compilation aborts because of
@@ -165,3 +165,20 @@ Windows, here are the instructions:
  * launch the `arybo/petanque/llvm_distutils_env.bat` script that will setup a
    command line with an environment to make distutils compiles with Clang.
  * go to the ``arybo/petanque`` directory and run ``python setup.py build``. The compiler should fail at compiling ``pytanque.cpp``.
+
+llvmlite support
+----------------
+
+If you want to use features that needs LLVM (like the expression assembler, see
+:meth:`arybo.lib.exprs_asm.asm_binary`), you need to have llvmlite installed.
+This library isn't installed automatically though pip because it is not trivial
+to install on every platform Arybo supports.  This allows Arybo to still be
+easily installable for many setup in a quick way.
+
+An easy way to install llvmlite under Debian-like system is::
+
+  $ sudo apt-get install llvm-3.8-dev
+  $ LLVM_CONFIG=/usr/lib/llvm-config-3.8 pip install llvmlite
+
+For other OS, please refer to the documentation of llvmlite here:
+https://llvmlite.readthedocs.io/en/latest/install/index.html.
