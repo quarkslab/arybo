@@ -207,6 +207,19 @@ def to_llvm_function(exprs, vars_, name="__arybo"):
     return M
 
 def asm_module(exprs, dst_reg, sym_to_reg, triple_or_target=None):
+    '''
+    Generate an LLVM module for a list of expressions
+
+    Arguments:
+      * See :meth:`arybo.lib.exprs_asm.asm_binary` for a description of the list of arguments
+
+    Output:
+      * An LLVM module with one function named "__arybo", containing the
+        translated expression.
+
+    See :meth:`arybo.lib.exprs_asm.asm_binary` for an usage example.
+    '''
+
     if not llvmlite_available:
         raise RuntimeError("llvmlite module unavailable! can't assemble...")
 
@@ -232,6 +245,37 @@ def asm_module(exprs, dst_reg, sym_to_reg, triple_or_target=None):
     return M
 
 def asm_binary(exprs, dst_reg, sym_to_reg, triple_or_target=None):
+    '''
+    Compile and assemble an expression for a given architecture.
+
+    Arguments:
+      * *exprs*: list of expressions to convert. This can represent a graph of
+        expressions.
+      * *dst_reg*: final register on which to store the result of the last
+        expression. This is represented by a tuple ("reg_name", reg_size_bits).
+        Example: ("rax", 64)
+      * *sym_to_reg*: a dictionnary that maps Arybo variable name to registers
+        (described as tuple, see *dst_reg*). Example: {"x": ("rdi",64), "y": ("rsi", 64)}
+      * *triple_or_target*: LLVM architecture triple to use. Use by default the
+        host architecture. Example: "x86_64-unknown-unknown"
+
+    Output:
+      * binary stream of the assembled expression for the given target
+
+    Here is an example that will compile and assemble "x+y" for x86_64::
+
+        from arybo.lib import MBA 
+        from arybo.lib import mba_exprs
+        from arybo.lib.exprs_asm import asm_binary
+        mba = MBA(64)
+        x = mba.var("x")
+        y = mba.var("y")
+        e = mba_exprs.ExprBV(x) + mba_exprs.ExprBV(y)
+        code = asm_binary([e], ("rax", 64), {"x": ("rdi", 64), "y": ("rsi", 64)}, "x86_64-unknown-unknown")
+        print(code.hex())
+
+    which outputs ``488d0437`` (which is equivalent to ``lea rax,[rdi+rsi*1]``).
+    '''
     if not llvmlite_available:
         raise RuntimeError("llvmlite module unavailable! can't assemble...")
 
