@@ -302,7 +302,10 @@ class MBAVariable(object):
         If a variable is missing from values, an exception will occur. (x
         or y in the example above)
         '''
-        return self.mba.evaluate(self.vec, values)
+        ret = self.mba.evaluate(self.vec, values)
+        if isinstance(ret, six.integer_types):
+            return ret
+        return self.from_vec(self.mba, ret)
     eval = evaluate
 
     def expand_esf(self):
