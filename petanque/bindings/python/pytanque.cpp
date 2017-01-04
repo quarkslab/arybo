@@ -11,6 +11,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
+#include <pybind11/stl.h>
 
 #include <sstream>
 
@@ -463,6 +464,13 @@ static pa::Expr expr_copy(pa::Expr const& e)
 	return e;
 }
 
+static pa::Expr expr_eval(pa::Expr const& e, std::map<pa::Expr, pa::Expr> const& map)
+{
+	pa::Expr ret = e;
+	subs_exprs(ret, map);
+  pa::simps::simplify(ret);
+	return ret;
+}
 
 static pa::Expr esf(pa::ExprESF::degree_type const degree, py::list const& l)
 {
@@ -628,19 +636,19 @@ PYBIND11_MAKE_OPAQUE(pa::SymbolsHist::const_iterator::value_type);
 PYBIND11_PLUGIN(pytanque)
 {
 	py::module m("pytanque", "petanque python bindings");
-    py::enum_<pa::expr_type_id>(m, "ExprType", "Enum of the various expression types")
-        .value("esf", pa::expr_type_id::esf_type)
-        .value("mul", pa::expr_type_id::mul_type)
-        .value("add", pa::expr_type_id::add_type)
-        .value("or_", pa::expr_type_id::or_type)
-        .value("sym", pa::expr_type_id::symbol_type)
-        .value("imm", pa::expr_type_id::imm_type)
-        ;
+	py::enum_<pa::expr_type_id>(m, "ExprType", "Enum of the various expression types")
+		.value("esf", pa::expr_type_id::esf_type)
+		.value("mul", pa::expr_type_id::mul_type)
+		.value("add", pa::expr_type_id::add_type)
+		.value("or_", pa::expr_type_id::or_type)
+		.value("sym", pa::expr_type_id::symbol_type)
+		.value("imm", pa::expr_type_id::imm_type)
+		;
 
-    py::class_<pa::ExprArgs>(m, "ExprArgs", "Represents the argument of an expression")
-        .def("__iter__", py_iterator<pa::ExprArgs>(), py::keep_alive<0,1>())
-        .def("size", &pa::ExprArgs::size)
-        .def("len", &pa::ExprArgs::size)
+	py::class_<pa::ExprArgs>(m, "ExprArgs", "Represents the argument of an expression")
+		.def("__iter__", py_iterator<pa::ExprArgs>(), py::keep_alive<0,1>())
+		.def("size", &pa::ExprArgs::size)
+		.def("len", &pa::ExprArgs::size)
 		.def("__len__", &pa::ExprArgs::size)
 		.def("__getitem__", exprargs_at, py::return_value_policy::reference_internal)
         ;
@@ -655,31 +663,32 @@ PYBIND11_PLUGIN(pytanque)
 		.def(py::self |= py::self)
 		.def("__repr__", expr_str)
 		.def("__eq__", expr_eq)
-        .def("__ne__", expr_neq)
-        .def("__lt__", &pa::Expr::operator<)
+		.def("__ne__", expr_neq)
+		.def("__lt__", &pa::Expr::operator<)
 		.def("args", expr_args, py::return_value_policy::reference_internal,
-			"Returns a reference to an ExprArgs object if this expression\
-			contains arguments. Throws a BadType exception otherwise")
-        .def("type", &pa::Expr::type)
+				"Returns a reference to an ExprArgs object if this expression\
+				contains arguments. Throws a BadType exception otherwise")
+		.def("type", &pa::Expr::type)
 		.def("sym_idx", expr_sym_idx,
-			"Returns the index associated to a symbol is this expression is\
-			a symbol. Throws a BadType exception otherwise")
-        .def("imm_value", expr_imm_value)
-        .def("is_imm", &pa::Expr::is_imm)
-        .def("is_sym", &pa::Expr::is_sym)
-        .def("is_add", &pa::Expr::is_add)
-        .def("is_mul", &pa::Expr::is_mul)
-        .def("is_esf", &pa::Expr::is_esf)
-        .def("name", &pa::Expr::name)
-        .def("contains", &pa::Expr::contains,
-			"Returns true iif arg0 is in self. This does not try to search for\
-			it recursively")
-        .def("anf_esf_max_degree", &pa::Expr::anf_esf_max_degree,
-			"Returns the maximum possible degree that a potential ESF could\
-			have in the expression. This is used by find_esfs")
+				"Returns the index associated to a symbol is this expression is\
+				a symbol. Throws a BadType exception otherwise")
+		.def("imm_value", expr_imm_value)
+		.def("is_imm", &pa::Expr::is_imm)
+		.def("is_sym", &pa::Expr::is_sym)
+		.def("is_add", &pa::Expr::is_add)
+		.def("is_mul", &pa::Expr::is_mul)
+		.def("is_esf", &pa::Expr::is_esf)
+		.def("name", &pa::Expr::name)
+		.def("contains", &pa::Expr::contains,
+				"Returns true iif arg0 is in self. This does not try to search for\
+				it recursively")
+		.def("anf_esf_max_degree", &pa::Expr::anf_esf_max_degree,
+				"Returns the maximum possible degree that a potential ESF could\
+				have in the expression. This is used by find_esfs")
 		.def("esf_degree", expr_esf_degree)
-        .def("copy", expr_copy, "Create a deep copy of the expression")
-        .def("__hash__", &pa::Expr::hash)
+		.def("copy", expr_copy, "Create a deep copy of the expression")
+		.def("__hash__", &pa::Expr::hash)
+		.def("eval", &expr_eval)
 		;
 
 	py::class_<pa::ExprSym>(m, "ExprSym", py::base<pa::Expr>())
