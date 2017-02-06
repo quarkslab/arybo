@@ -82,6 +82,7 @@ class Expr(object):
         return ExprOr(self, o)
 
     def __ror__(self, o):
+        o = self.__parse_arg(o)
         return ExprOr(o, self)
 
     def __lshift__(self, o):
