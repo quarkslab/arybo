@@ -115,7 +115,7 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
         TAstN.BVNEG: operator.neg
     }
     unop = unops.get(Ty, None)
-    if unop != None:
+    if not unop is None:
         return unop(next(children))
 
     binops = {
@@ -130,11 +130,13 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
         TAstN.BVXNOR: lambda x,y: ~(x^y),
         TAstN.BVUDIV: lambda x,y: x.udiv(y),
         TAstN.BVSDIV: lambda x,y: x.sdiv(y),
+        TAstN.BVUREM: lambda x,y: x.urem(y),
+        TAstN.BVSREM: lambda x,y: x.srem(y),
         TAstN.LAND:   operator.and_,
         TAstN.LOR:    operator.or_
     }
     binop = binops.get(Ty, None)
-    if binop != None:
+    if not binop is None:
         return reduce(binop, children)
 
     # Logical op
@@ -151,7 +153,7 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
         TAstN.BVSLT:    lambda x,y: EX.ExprCmpLt(x,y,True)
     }
     lop = lops.get(Ty, None)
-    if lop != None:
+    if not lop is None:
         return reduce(lop, children)
 
     # Conditional

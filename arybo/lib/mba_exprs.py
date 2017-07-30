@@ -123,6 +123,14 @@ class Expr(object):
         o = self.__parse_arg(o)
         return ExprDiv(self, o, is_signed=True)
 
+    def urem(self, o):
+        o = self.__parse_arg(o)
+        return ExprRem(self, o, is_signed=False)
+
+    def srem(self, o):
+        o = self.__parse_arg(o)
+        return ExprRem(self, o, is_signed=True)
+
     def __getitem__(self,s):
         if not isinstance(s, slice):
             raise ValueError("can only get slices")
@@ -519,9 +527,18 @@ class ExprDiv(ExprInner, ExprBinaryOp):
                     slice(0, nbits, 1))
             ExprInner.__init__(self,e)
 
-        @property
-        def is_signed(self):
-            return self._is_signed
+    @property
+    def is_signed(self):
+        return self._is_signed
+
+class ExprRem(ExprBinaryOp):
+    def __init__(self, X, Y, is_signed=False):
+        ExprBinaryOp.__init__(self,X,Y)
+        self._is_signed = is_signed
+
+    @property
+    def is_signed(self):
+        return self._is_signed
 
 # Logical expressions (1-bit)
 class ExprLogical(ExprBinaryOp):
@@ -728,7 +745,7 @@ class PrettyPrinter(object):
         op = ops[type(e)]
         return "("+(" %s " % op).join(self.visit(a) for a in e.args)+")"
     def visit_BinaryOp(self, e):
-        ops = {ExprAdd: '+', ExprMul: '*', ExprSub: '-', ExprDiv: '/'}
+        ops = {ExprAdd: '+', ExprMul: '*', ExprSub: '-', ExprDiv: '/', ExprRem: '%'}
         return self.visit_nary_args(e, ops)
     def visit_NaryOp(self, e):
         ops = {ExprXor: '^', ExprAnd: '&', ExprOr: '|'}

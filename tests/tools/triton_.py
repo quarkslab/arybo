@@ -4,6 +4,7 @@ import operator
 
 from arybo.lib import MBA, simplify_inplace, expand_esf_inplace
 from arybo.lib.mba_exprs import eval_expr
+from arybo.lib.exprs_asm import to_llvm_function
 from arybo.tools import tritonast2arybo, tritonexprs2arybo, triton_available
 
 if triton_available:
@@ -228,6 +229,28 @@ class TritonTest():
         if self.use_expr:
             e = eval_expr(e)
         self.assertEqual(e, ((rdi&0xff)^0x5C).vec)
+
+    def test_urem(self):
+        code = [
+        "\xbf\xAB\x00\x00\x00",     # mov   edi, 0xAB
+        "\xf7\xff",                 # idiv  edi
+        "\x83\xfa\x00"              # cmp   edx, 0x00
+        ]
+
+        TT.setArchitecture(TT.ARCH.X86_64)
+
+        rax = TT.convertRegisterToSymbolicVariable(TT.REG.RAX)
+        rax = tritonast2arybo(TAst.variable(rax))
+        rdx = TT.convertRegisterToSymbolicVariable(TT.REG.RDX)
+        rdx = tritonast2arybo(TAst.variable(rdx))
+
+        for opcodes in code:
+            inst = TT.Instruction(opcodes)
+            TT.processing(inst)
+
+        exprs = TT.sliceExpressions(TT.getSymbolicRegisters()[TT.REG.RDX])
+        e = tritonexprs2arybo(exprs)
+        to_llvm_function(e, [rax.v, rdx.v])
 
 @unittest.skipIf(triton_available == False, "skipping Triton-related tests as it is not available")
 class TritonTestNoExpr(TritonTest, unittest.TestCase):

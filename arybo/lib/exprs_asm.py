@@ -96,12 +96,17 @@ class ToLLVMIr(CachePass):
             EX.ExprAdd: self.IRB.add,
             EX.ExprSub: self.IRB.sub,
             EX.ExprMul: self.IRB.mul,
-            EX.ExprDiv: self.IRB.udiv,
             EX.ExprShl: self.IRB.shl,
             EX.ExprLShr: self.IRB.lshr
         }
         op = ops[type(e)]
         return self.visit_nary_args(e, op)
+
+    def visit_Div(self, e):
+        return self.visit_nary_args(e, self.IRB.sdiv if e.is_signed else self.IRB.udiv)
+
+    def visit_Rem(self, e):
+        return self.visit_nary_args(e, self.IRB.srem if e.is_signed else self.IRB.urem)
 
     def visit_NaryOp(self, e):
         ops = {
