@@ -1,5 +1,5 @@
 import triton as TT 
-from arybo.tools import triton2arybo
+from arybo.tools import tritonast2arybo
 
 TT.setArchitecture(TT.ARCH.X86_64)
 
@@ -14,5 +14,5 @@ rax_ast = TT.buildSymbolicRegister(TT.REG.RAX)
 rax_ast = TT.getFullAst(rax_ast)
 print(rax_ast)
 
-e = triton2arybo(rax_ast)
+e = tritonast2arybo(rax_ast)
 print(e)

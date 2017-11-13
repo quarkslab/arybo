@@ -13,7 +13,7 @@ AST (Abstract Syntax Tree). More information about Triton's AST can be found in
 <http://triton.quarkslab.com/documentation/doxygen/py_ast_page.html>`_.
 
 Arybo can handle a subset of Triton AST to convert it into an MBA variable,
-thanks to the :meth:`arybo.tools.triton2arybo` API. Here is a small example (from
+thanks to the :meth:`arybo.tools.tritonast2arybo` API. Here is a small example (from
 ``examples/triton_ast.py``):
 
 .. literalinclude:: ../../examples/triton_ast.py
