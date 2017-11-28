@@ -28,7 +28,7 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
         An :class:`arybo.lib.MBAVariable` object
     '''
 
-    children_ = e.getChilds()
+    children_ = e.getChildren()
     children = (tritonast2arybo(c,use_exprs,use_esf,context) for c in children_)
     reversed_children = (tritonast2arybo(c,use_exprs,use_esf,context) for c in reversed(children_))
 
@@ -87,6 +87,7 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
 
     # Logical/arithmetic shifts
     shifts = {
+        TAstN.BVASHR: operator.rshift,
         TAstN.BVLSHR: operator.rshift,
         TAstN.BVSHL:  operator.lshift,
     }
