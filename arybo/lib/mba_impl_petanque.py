@@ -53,17 +53,24 @@ def next_zero_bit(v):
 
 def evaluate_expr(E, nbits, map_):
     # keys of map_ can be mba variables or symbols
-    #   => an mba variable must map to an integer
+    #   => an mba variable must map to an integer or an mba variable
     #   => a symbol must map to an expression
     keys = []
     values = []
     for k,v in six.iteritems(map_):
         # TOFIX: not a clean test
         if hasattr(k, "vec"):
-            if not isinstance(v, six.integer_types):
-                raise ValueError("an MBAVariable must map to an integer value!")
             keys.extend(k.vec)
-            values.extend(imm((v>>i)&1) for i in range(k.nbits))
+            if isinstance(v, six.integer_types):
+                values.extend(imm((v>>i)&1) for i in range(k.nbits))
+                continue
+            if hasattr(v, "vec"):
+                v = v.vec
+            if isinstance(v, Vector):
+                assert(len(v) == len(k.vec))
+                values.extend(v)
+                continue
+            raise ValueError("an MBAVariable must map to an integer value or an MBAVariable!")
         elif isinstance(k, Expr):
             if not k.is_sym():
                 raise ValueError("only symbols or MBAVariable can be a key")
@@ -462,6 +469,7 @@ class MBAImpl(object):
 
     def vectorial_decomp(self, symbols, X):
         return analyses.vectorial_decomp(symbols, X)
+
 
     def permut2expr(self, P, X):
         ret = Vector(self.nbits)

@@ -101,6 +101,7 @@ class MBAVariable(object):
 
     def __init__(self, mba, arg):
         self.mba = mba
+        assert(isinstance(arg, Vector))
         self.arg = arg
         self._always_simplify = True
         self._expand_esf = False

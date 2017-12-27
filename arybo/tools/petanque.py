@@ -132,7 +132,7 @@ def app_inverse(A):
         G1inv[i] = solved.get(i, X[i])
     G1inv = MBAVariable(mba, G1inv)
     Finv = G1inv.eval({X: G0})
-    Finv = MBAVariable(mba, Finv)
+    #Finv = MBAVariable(mba, Finv)
     return Finv.vectorial_decomp([Y])
 
 def find_one_esf(e, d):
