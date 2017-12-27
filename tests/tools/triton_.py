@@ -9,22 +9,23 @@ from arybo.tools import tritonast2arybo, tritonexprs2arybo, triton_available
 
 if triton_available:
     import triton as TT
-    import triton.ast as TAst
+    ctx = TT.TritonContext()
+    ctx.setArchitecture(TT.ARCH.X86)
+    TAst = ctx.getAstContext()
 
 class TritonTest():
     def setUp(self):
         # Initialize the engine
-        TT.setArchitecture(TT.ARCH.X86)
 
         self.mba8  = MBA(8)
         self.mba16 = MBA(16)
         self.mba8.use_esf  = True
         self.mba16.use_esf = True
         # Useful variables using duringtests
-        self.x8_t  = TAst.variable(TT.newSymbolicVariable(8))
-        self.y8_t  = TAst.variable(TT.newSymbolicVariable(8))
-        self.x16_t = TAst.variable(TT.newSymbolicVariable(16))
-        self.y16_t = TAst.variable(TT.newSymbolicVariable(16))
+        self.x8_t  = TAst.variable(ctx.newSymbolicVariable(8))
+        self.y8_t  = TAst.variable(ctx.newSymbolicVariable(8))
+        self.x16_t = TAst.variable(ctx.newSymbolicVariable(16))
+        self.y16_t = TAst.variable(ctx.newSymbolicVariable(16))
         self.x8  = self.mba8.var(self.x8_t.getValue())
         self.y8  = self.mba8.var(self.y8_t.getValue())
         self.x16 = self.mba16.var(self.x16_t.getValue())
@@ -105,7 +106,8 @@ class TritonTest():
         # For the first kind, it can take any AstNode. For the second one, an
         # integer is forced.
         ops = (
-            (TAst.bvlshr, operator.rshift),
+            (TAst.bvashr, lambda x,n: x.ashr(n)),
+            (TAst.bvlshr, lambda x,n: x.lshr(n)),
             (TAst.bvshl,  operator.lshift),
         )
         for op in ops:
@@ -212,18 +214,20 @@ class TritonTest():
         "\x0F\xB6\xC0",
         ]
 
-        TT.setArchitecture(TT.ARCH.X86_64)
+        ctx = TT.TritonContext()
+        ctx.setArchitecture(TT.ARCH.X86_64)
+        TAst = ctx.getAstContext()
 
-        rdi = TT.convertRegisterToSymbolicVariable(TT.REG.RDI)
+        rdi = ctx.convertRegisterToSymbolicVariable(ctx.registers.rdi)
         rdi = tritonast2arybo(TAst.variable(rdi),use_exprs=False)
 
         for opcodes in code:
             inst = TT.Instruction(opcodes)
-            TT.processing(inst)
+            ctx.processing(inst)
 
-        rax_ast = TT.buildSymbolicRegister(TT.REG.RAX)
-        rax_ast = TT.getFullAst(rax_ast)
-        rax_ast = TT.simplify(rax_ast, True)
+        rax_ast = ctx.buildSymbolicRegister(ctx.registers.rax)
+        rax_ast = ctx.unrollAst(rax_ast)
+        rax_ast = ctx.simplify(rax_ast, True)
         # Check that this gives a xor 5C
         e = tritonast2arybo(rax_ast,use_exprs=self.use_expr,use_esf=False)
         if self.use_expr:
@@ -237,18 +241,20 @@ class TritonTest():
         "\x83\xfa\x00"              # cmp   edx, 0x00
         ]
 
-        TT.setArchitecture(TT.ARCH.X86_64)
+        ctx = TT.TritonContext()
+        ctx.setArchitecture(TT.ARCH.X86_64)
+        TAst = ctx.getAstContext()
 
-        rax = TT.convertRegisterToSymbolicVariable(TT.REG.RAX)
+        rax = ctx.convertRegisterToSymbolicVariable(ctx.registers.rax)
         rax = tritonast2arybo(TAst.variable(rax))
-        rdx = TT.convertRegisterToSymbolicVariable(TT.REG.RDX)
+        rdx = ctx.convertRegisterToSymbolicVariable(ctx.registers.rdx)
         rdx = tritonast2arybo(TAst.variable(rdx))
 
         for opcodes in code:
             inst = TT.Instruction(opcodes)
-            TT.processing(inst)
+            ctx.processing(inst)
 
-        exprs = TT.sliceExpressions(TT.getSymbolicRegisters()[TT.REG.RDX])
+        exprs = ctx.sliceExpressions(ctx.getSymbolicRegisters()[TT.REG.X86_64.RDX])
         e = tritonexprs2arybo(exprs)
         to_llvm_function(e, [rax.v, rdx.v])
 

@@ -97,7 +97,8 @@ class ToLLVMIr(CachePass):
             EX.ExprSub: self.IRB.sub,
             EX.ExprMul: self.IRB.mul,
             EX.ExprShl: self.IRB.shl,
-            EX.ExprLShr: self.IRB.lshr
+            EX.ExprLShr: self.IRB.lshr,
+            EX.ExprAShr: self.IRB.ashr
         }
         op = ops[type(e)]
         return self.visit_nary_args(e, op)

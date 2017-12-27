@@ -430,6 +430,19 @@ class MBAImpl(object):
     def rshift_n(self, X, n):
         return X<<n
 
+    def arshift_n(self, X, n):
+        n = min(n, self.nbits)
+        ret = X<<n
+        last_bit = X[self.nbits-1]
+        for i in range(self.nbits-n, self.nbits):
+            ret[i] = last_bit
+        return ret
+
+    def rshift_Y(self, X, Y):
+        # Generate 2**Y and multiply X by this
+        fds
+        pass
+
     def rol_n(self, X, n):
         # rol(0b(d b c a), 1) = 0b(b c a d)
         # rol(vec(a,b,c,d), 1) = vec(d,a,c,b))

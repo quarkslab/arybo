@@ -90,8 +90,15 @@ class Expr(object):
         return ExprShl(self, o)
 
     def __rshift__(self, o):
+        return self.lshr(o)
+
+    def lshr(self, o):
         o = self.__parse_arg(o)
         return ExprLShr(self, o)
+
+    def ashr(self, o):
+        o = self.__parse_arg(o)
+        return ExprAShr(self, o)
 
     def __neg__(self):
         return ExprSub(ExprCst(0, self.nbits), self)
@@ -317,6 +324,26 @@ class ExprLShr(ExprBinaryOp):
         if i >= self.nbits-self.n:
             return imm(False)
         return args[0].eval(vec, i+self.n, use_esf)
+
+class ExprAShr(ExprBinaryOp):
+    @property
+    def n(self):
+        return ExprCst.get_cst(self.Y, self.nbits)
+
+    def init_ctx(self):
+        return CtxUninitialized
+
+    def eval(self, vec, i, ctx, args, use_esf):
+        a = args[0]
+        n = self.n
+        # Let's cache the last bit we need to propagate
+        if i >= self.nbits-n:
+            last_bit = ctx.get()
+            if last_bit is CtxUninitialized:
+                last_bit = a.eval(vec, self.nbits-1, use_esf)
+                ctx.set(last_bit)
+            return last_bit
+        return a.eval(vec, i+n, use_esf)
 
 class ExprRol(ExprBinaryOp):
     @property
@@ -721,19 +748,21 @@ class PrettyPrinter(object):
         estr = ", ".join((str(a) for a in e.vec))
         return "BV(%s)" % estr
     def visit_Not(self, e):
-        return "~"+self.visit(e.arg)
+        return "~"+self.visit(e.args[0])
     def visit_Shl(self, e):
-        return "(%s << %d)" % (self.visit(e.arg), e.n)
+        return "(%s << %d)" % (self.visit(e.args[0]), e.n)
     def visit_LShr(self, e):
-        return "(%s >> %d)" % (self.visit(e.arg), e.n)
+        return "(%s l>> %d)" % (self.visit(e.args[0]), e.n)
+    def visit_AShr(self, e):
+        return "(%s a>> %d)" % (self.visit(e.args[0]), e.n)
     def visit_Rol(self, e):
-        return "rol(%s,%d)" % (self.visit(e.arg), e.n)
+        return "rol(%s,%d)" % (self.visit(e.args[0]), e.n)
     def visit_Ror(self, e):
-        return "rol(%s,%d)" % (self.visit(e.arg), e.n)
+        return "rol(%s,%d)" % (self.visit(e.args[0]), e.n)
     def visit_SX(self, e):
-        return "sx(%d, %s)" % (e.n, self.visit(e.arg))
+        return "sx(%d, %s)" % (e.n, self.visit(e.args[0]))
     def visit_ZX(self, e):
-        return "zx(%d, %s)" % (e.n, self.visit(e.arg))
+        return "zx(%d, %s)" % (e.n, self.visit(e.args[0]))
     def visit_Slice(self, e):
         idxes = sorted(e.idxes)
         return "%s[%d:%d]" % (self.visit(e.arg), idxes[0], idxes[-1])

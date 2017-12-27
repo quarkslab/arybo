@@ -212,10 +212,16 @@ class MBAVariable(object):
             o = o.to_cst()
         return self.__call_op('lshift', o)
 
-    def __rshift__(self, o):
+    def ashr(self, o):
+        if not isinstance(o, six.integer_types):
+            o = o.to_cst()
+        return self.__call_op('arshift', o)
+
+    def lshr(self, o):
         if not isinstance(o, six.integer_types):
             o = o.to_cst()
         return self.__call_op('rshift', o)
+    __rshift__ = lshr
 
     def __invert__(self):
         return self.__ret(self.mba.not_X(self.vec))
