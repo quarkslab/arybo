@@ -779,6 +779,24 @@ class PrettyPrinter(object):
     def visit_NaryOp(self, e):
         ops = {ExprXor: '^', ExprAnd: '&', ExprOr: '|'}
         return self.visit_nary_args(e, ops)
+    def visit_Cond(self, e):
+        cond = self.visit(e.cond)
+        a = self.visit(e.a)
+        b = self.visit(e.b)
+        return "(%s) ? (%s) : (%s)" % (cond,a,b)
+    def visit_Cmp(self, e):
+        ops = {
+          ExprCmpEq: '==',
+          ExprCmpNeq: '!=',
+          ExprCmpLt: '<',
+          ExprCmpLte: '<=',
+          ExprCmpGt: '>',
+          ExprCmpGte: '>='
+        }
+        op = ops[type(e)]
+        X = self.visit(e.X)
+        Y = self.visit(e.Y)
+        return "(%s) %s (%s)" % (X, op, Y)
     def visit_Expr(self, e):
         raise ValueError("unsupported type %s" % str(type(e)))
 

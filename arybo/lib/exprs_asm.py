@@ -29,6 +29,16 @@ class ToLLVMIr(CachePass):
         self.sym_to_value = sym_to_value
         self.values = {}
 
+    def visit_wrapper(self, e, cb):
+        ret = super(ToLLVMIr, self).visit_wrapper(e, cb)
+        if not isinstance(ret, tuple):
+            return (ret,self.IRB.block)
+        else:
+            return ret
+
+    def visit_value(self, e):
+        return EX.visit(e, self)[0]
+
     def visit_Cst(self, e):
         return ll.Constant(IntType(e.nbits), e.n)
 
@@ -44,24 +54,24 @@ class ToLLVMIr(CachePass):
         return value
 
     def visit_Not(self, e):
-        return self.IRB.not_(EX.visit(e.arg, self))
+        return self.IRB.not_(self.visit_value(e.arg))
 
     def visit_ZX(self, e):
-        return self.IRB.zext(EX.visit(e.arg, self), IntType(e.n))
+        return self.IRB.zext(self.visit_value(e.arg), IntType(e.n))
 
     def visit_SX(self, e):
-        return self.IRB.sext(EX.visit(e.arg, self), IntType(e.n))
+        return self.IRB.sext(self.visit_value(e.arg), IntType(e.n))
 
     def visit_Concat(self, e):
         # Generate a suite of OR + shifts
         # TODO: pass that lowers concat
         arg0 = e.args[0]
-        ret = EX.visit(arg0, self)
+        ret = self.visit_value(arg0)
         type_ = IntType(e.nbits)
         ret = self.IRB.zext(ret, type_)
         cur_bits = arg0.nbits
         for a in e.args[1:]:
-            cur_arg = self.IRB.zext(EX.visit(a, self), type_)
+            cur_arg = self.IRB.zext(self.visit_value(a), type_)
             ret = self.IRB.or_(ret,
                 self.IRB.shl(cur_arg, ll.Constant(type_, cur_bits)))
             cur_bits += a.nbits
@@ -69,7 +79,7 @@ class ToLLVMIr(CachePass):
 
     def visit_Slice(self, e):
         # TODO: pass that lowers slice
-        ret = EX.visit(e.arg, self)
+        ret = self.visit_value(e.arg)
         idxes = e.idxes
         # Support only sorted indxes for now
         if idxes != list(range(idxes[0], idxes[-1]+1)):
@@ -83,13 +93,13 @@ class ToLLVMIr(CachePass):
         # left-shift to get the idx as the MSB, and them use an arithmetic
         # right shift of nbits-1
         type_ = IntType(e.nbits)
-        ret = EX.visit(e.arg, self)
+        ret = self.visit_value(e.arg)
         ret = self.IRB.zext(ret, type_)
         ret = self.IRB.shl(ret, ll.Constant(type_, e.nbits-e.idx-1))
         return self.IRB.ashr(ret, ll.Constant(type_, e.nbits-1))
 
     def visit_nary_args(self, e, op):
-        return op(*(EX.visit(a, self) for a in e.args))
+        return op(*(self.visit_value(a) for a in e.args))
 
     def visit_BinaryOp(self, e):
         ops = {
@@ -128,10 +138,10 @@ class ToLLVMIr(CachePass):
             EX.ExprCmp.OpGt:  '>',
             EX.ExprCmp.OpGte: '>='
         }
-        return f(cmp_op[e.op], EX.visit(e.X, self), EX.visit(e.Y, self))
+        return f(cmp_op[e.op], self.visit_value(e.X), self.visit_value(e.Y))
 
     def visit_Cond(self, e):
-        cond = EX.visit(e.cond, self)
+        cond = self.visit_value(e.cond)
         bb_name = self.IRB.basic_block.name
         ifb = self.IRB.append_basic_block(bb_name + ".if")
         elseb = self.IRB.append_basic_block(bb_name + ".else")
@@ -139,18 +149,18 @@ class ToLLVMIr(CachePass):
         self.IRB.cbranch(cond, ifb, elseb)
 
         self.IRB.position_at_end(ifb)
-        ifv = EX.visit(e.a, self)
+        ifv,ifb = EX.visit(e.a, self)
         self.IRB.branch(endb)
 
         self.IRB.position_at_end(elseb)
-        elsev = EX.visit(e.b, self)
+        elsev,elseb = EX.visit(e.b, self)
         self.IRB.branch(endb)
 
         self.IRB.position_at_end(endb)
         ret = self.IRB.phi(IntType(e.nbits))
         ret.add_incoming(ifv, ifb)
         ret.add_incoming(elsev, elseb)
-        return ret
+        return ret,endb
     
 def llvm_get_target(triple_or_target=None):
     global __llvm_initialized
@@ -183,7 +193,7 @@ def to_llvm_ir(exprs, sym_to_value, IRB):
     visitor = ToLLVMIr(sym_to_value, IRB)
     for e in exprs:
         e = lower_rol_ror(e)
-        ret = EX.visit(e, visitor)
+        ret = visitor.visit_value(e)
     return ret
 
 def to_llvm_function(exprs, vars_, name="__arybo"):
