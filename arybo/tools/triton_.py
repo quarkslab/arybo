@@ -105,8 +105,8 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
     rshift = rshifts.get(Ty, None)
     if not rshift is None:
         # Notice the order here compared to above...
-        n = next(children)
         v = next(children)
+        n = next(children)
         return rshift(v,n)
 
     # Unary op
