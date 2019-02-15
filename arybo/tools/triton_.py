@@ -90,24 +90,14 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
         TAstN.BVASHR: lambda a,b: a.ashr(b),
         TAstN.BVLSHR: lambda a,b: a.lshr(b),
         TAstN.BVSHL:  operator.lshift,
+        TAstN.BVROL:  lambda x,n: x.rol(n),
+        TAstN.BVROR:  lambda x,n: x.ror(n)
     }
     shift = shifts.get(Ty, None)
     if not shift is None:
         v = next(children)
         n = next(children)
         return shift(v,n)
-    # We need to separate rotate shifts from the others because the triton API
-    # is different for this one... (no comment)
-    rshifts = {
-        TAstN.BVROL:  lambda x,n: x.rol(n),
-        TAstN.BVROR:  lambda x,n: x.ror(n)
-    }
-    rshift = rshifts.get(Ty, None)
-    if not rshift is None:
-        # Notice the order here compared to above...
-        n = next(children)
-        v = next(children)
-        return rshift(v,n)
 
     # Unary op
     unops = {
