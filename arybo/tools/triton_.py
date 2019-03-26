@@ -47,8 +47,8 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
         if n == v.nbits:
             return v
         return v.sext(n)
-    if Ty == TAstN.DECIMAL:
-        return e.getValue()
+    if Ty == TAstN.INTEGER:
+        return e.getInteger()
     if Ty == TAstN.BV:
         cst = next(children)
         nbits = next(children)
@@ -67,7 +67,7 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
         else:
             return flatten(reversed_children)
     if Ty == TAstN.VARIABLE:
-        name = e.getValue()
+        name = e.getSymbolicVariable().getName()
         ret = _get_mba(e.getBitvectorSize(),use_esf).var(name)
         if use_exprs:
             ret = EX.ExprBV(ret)
@@ -75,7 +75,7 @@ def tritonast2arybo(e, use_exprs=True, use_esf=False, context=None):
     if Ty == TAstN.REFERENCE:
         if context is None:
             raise ValueError("reference node without context can't be resolved")
-        id_ = e.getValue()
+        id_ = e.getSymbolicExpression().getId()
         ret = context.get(id_, None)
         if ret is None:
             raise ValueError("expression id %d not found in context" % id_)
