@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="arybo",
-    version="1.0.0",
+    version="1.1.0",
     author="Adrien Guinet",
     author_email="aguinet@quarkslab.com",
     description="Manipulation, canonicalization and identification of mixed boolean-arithmetic symbolic expressions",
@@ -14,7 +14,7 @@ setup(
         "six"
     ],
     classifiers=[
-	'Development Status :: 4 - Beta',
+	'Development Status :: 5 - Production/Stable',
 	'Intended Audience :: Science/Research',
 	'Intended Audience :: Developers',
 	'Topic :: Software Development :: Build Tools',
@@ -22,10 +22,10 @@ setup(
 	'Topic :: Scientific/Engineering',
 	'License :: OSI Approved :: BSD License',
 	'Programming Language :: Python :: 3',
-	'Programming Language :: Python :: 3.2',
-	'Programming Language :: Python :: 3.3',
-	'Programming Language :: Python :: 3.4',
 	'Programming Language :: Python :: 3.5'
+	'Programming Language :: Python :: 3.6'
+	'Programming Language :: Python :: 3.7'
+	'Programming Language :: Python :: 3.8'
     ],
     keywords='symbolic computation canonicalization boolean-arithmetic expressions',
     license='BSD',

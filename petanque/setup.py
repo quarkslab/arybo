@@ -22,7 +22,7 @@ module = Extension('pytanque',
                     sources = glob.glob('src/*.cpp') + glob.glob('bindings/python/*.cpp'))
 
 setup (name = 'pytanque',
-    version = '1.0.0',
+    version = '1.1.0',
     description = 'petanque static python bindings',
     author = 'Adrien Guinet',
     author_email = 'aguinet@quarkslab.com',
@@ -32,7 +32,7 @@ extension for an easy setup. See the documentation for compiling the python
 extension by hand to link with an external shared library for libpetanque.
 ''',
     classifiers=[
-	'Development Status :: 4 - Beta',
+	'Development Status :: 5 - Production/Stable',
 	'Intended Audience :: Science/Research',
 	'Intended Audience :: Developers',
 	'Topic :: Software Development :: Build Tools',
@@ -40,10 +40,10 @@ extension by hand to link with an external shared library for libpetanque.
 	'Topic :: Scientific/Engineering',
 	'License :: OSI Approved :: BSD License',
 	'Programming Language :: Python :: 3',
-	'Programming Language :: Python :: 3.2',
-	'Programming Language :: Python :: 3.3',
-	'Programming Language :: Python :: 3.4',
 	'Programming Language :: Python :: 3.5'
+	'Programming Language :: Python :: 3.6'
+	'Programming Language :: Python :: 3.7'
+	'Programming Language :: Python :: 3.8'
     ],
     keywords='symbolic computation canonicalization boolean-arithmetic expressions',
     license='BSD',
