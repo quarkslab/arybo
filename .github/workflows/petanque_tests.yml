@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: "petanque tests"
 
 on: [push]
 
@@ -21,6 +21,8 @@ jobs:
         mkdir build
         cd build && cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -G Ninja ..
     - name: Build
+      working-directory: petanque/build
       run: ninja
     - name: Tests
+      working-directory: petanque/build
       run: ninja test
