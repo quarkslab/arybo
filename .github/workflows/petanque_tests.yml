@@ -5,16 +5,23 @@ on: [push]
 jobs:
   build:
 
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        build_type: ["DEBUG", "RELEASE"]
+        build_type: ["Debug", "Release"]
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install dependencies
+    - name: Install dependencies (Ubuntu)
+      if: startsWith(matrix.os, 'ubuntu')
       run: |
         sudo apt install ninja-build
+    - name: Install dependencies (OSX)
+      if: startsWith(matrix.os, 'macos')
+      run: |
+        brew install ninja
     - name: CMake
       working-directory: petanque
       run: |
