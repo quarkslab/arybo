@@ -9,7 +9,6 @@ setup(
     packages=["arybo", "arybo.lib", "arybo.tools"],
     install_requires=[
         "networkx==2.4",
-        "ipython",
         "pytanque >= 1.0",
         "six"
     ],
