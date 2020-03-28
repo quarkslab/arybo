@@ -8,25 +8,44 @@ jobs:
     strategy:
       matrix:
         build_type: ["Debug", "Release"]
-        os: [ubuntu-latest, macos-latest]
+        config:
+          - os: ubuntu-latest
+            shared_libs: ON
+            cc: gcc
+            cxx: g++
+          - os: macos-latest
+            shared_libs: ON
+            cc: clang
+            cxx: clang++
+          - os: windows-latest
+            shared_libs: OFF
+            cc: cl.exe
+            cxx: cl.exe
 
-    runs-on: ${{ matrix.os }}
+
+    runs-on: ${{ matrix.config.os }}
 
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies (Ubuntu)
-      if: startsWith(matrix.os, 'ubuntu')
+      if: runner.os == 'Linux'
       run: |
         sudo apt install ninja-build
     - name: Install dependencies (OSX)
-      if: startsWith(matrix.os, 'macos')
+      if: runner.os == 'macOS'
       run: |
         brew install ninja
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        choco install ninja
+    - uses: ilammy/msvc-dev-cmd@v1
+      if: runner.os == 'Windows'
     - name: CMake
       working-directory: petanque
       run: |
         mkdir build
-        cd build && cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -G Ninja ..
+        cd build && cmake -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SHARED_LIBS=${{ matrix.config.shared_libs }} -G Ninja ..
     - name: Build
       working-directory: petanque/build
       run: ninja

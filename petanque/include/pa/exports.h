@@ -36,8 +36,7 @@
   #define PA_HELPER_LOCAL  __attribute__ ((visibility ("hidden")))
 #endif
 
-#if defined(PA_DISTUTILS)
-  // Everyhting is compiled into one final .so. The necessary Python API are already exported.
+#if defined(petanque_STATIC)
   #define PA_API
   #define PA_LOCAL
   #define PA_TEMPLATE_EXPIMP

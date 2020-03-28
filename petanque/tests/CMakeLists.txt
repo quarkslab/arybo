@@ -1,4 +1,4 @@
-add_library(patests tests.cpp)
+add_library(patests STATIC tests.cpp)
 target_link_libraries(patests petanque) 
 
 add_executable(op_add op_add.cpp)

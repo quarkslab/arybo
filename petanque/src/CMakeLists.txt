@@ -38,6 +38,8 @@ if (BUILD_SHARED_LIBS)
     VISIBILITY_INLINES_HIDDEN ON
     C_VISIBILITY_PRESET hidden
     CXX_VISIBILITY_PRESET hidden)
+else()
+  target_compile_definitions(petanque PUBLIC petanque_STATIC)
 endif()
 
 install(TARGETS petanque LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
