@@ -17,7 +17,7 @@
 
 namespace py = pybind11;
 
-template <class T>
+template <class T, class PyIt = pybind11::detail::list_iterator>
 struct stl_input_iterator: public std::iterator<std::input_iterator_tag, T>
 {
 	typedef std::iterator<std::input_iterator_tag, T> iterator_base;
@@ -28,9 +28,8 @@ struct stl_input_iterator: public std::iterator<std::input_iterator_tag, T>
 	using pointer = typename iterator_base::pointer;
 	using reference = typename iterator_base::reference;
 
-	stl_input_iterator() { }
-	stl_input_iterator(py::iterator const& it):
-		_it(it)
+	stl_input_iterator(PyIt&& it):
+		_it(std::move(it))
 	{ }
 
 	bool operator!=(stl_input_iterator const& o) const { return _it != o._it; }
@@ -49,17 +48,17 @@ struct stl_input_iterator: public std::iterator<std::input_iterator_tag, T>
 	stl_input_iterator& operator++(int) { return _it++; }
 
 private:
-	py::iterator _it;
+	PyIt _it;
 };
 
-template <class T>
+template <class T, class PyIt = pybind11::detail::list_iterator>
 struct stl_value_input_iterator: public std::iterator<std::input_iterator_tag, T>
 {
 	typedef T value_type;
 
 	stl_value_input_iterator() { }
-	stl_value_input_iterator(py::iterator const& it):
-		_it(it)
+	stl_value_input_iterator(PyIt&& it):
+		_it(std::move(it))
 	{ }
 
 	bool operator!=(stl_value_input_iterator const& o) const { return _it != o._it; }
@@ -74,7 +73,7 @@ struct stl_value_input_iterator: public std::iterator<std::input_iterator_tag, T
 	stl_value_input_iterator& operator++(int) { return _it++; }
 
 private:
-	py::iterator _it;
+	PyIt _it;
 };
 
 namespace pa {
@@ -485,9 +484,8 @@ static pa::Vector esf_vector(pa::ExprESF::degree_type const degree, py::list con
 	}
 	stl_input_iterator<pa::Vector> const begin(l.begin());
 	stl_input_iterator<pa::Vector> end(l.end());
-	stl_input_iterator<pa::Vector> it;
+	stl_input_iterator<pa::Vector> it(begin); ++it;
 	const size_t n = begin->size();
-	it = begin; ++it;
 	for (; it != end; ++it) {
 		if (n != it->size()) {
 			return pa::Vector{};
@@ -633,9 +631,10 @@ auto py_iterator()
 
 PYBIND11_MAKE_OPAQUE(pa::SymbolsHist::const_iterator::value_type);
 
-PYBIND11_PLUGIN(pytanque)
+PYBIND11_MODULE(pytanque, m)
 {
-	py::module m("pytanque", "petanque python bindings");
+  m.doc() = "petanque python bindings";
+
 	py::enum_<pa::expr_type_id>(m, "ExprType", "Enum of the various expression types")
 		.value("esf", pa::expr_type_id::esf_type)
 		.value("mul", pa::expr_type_id::mul_type)
@@ -691,7 +690,7 @@ PYBIND11_PLUGIN(pytanque)
 		.def("eval", &expr_eval)
 		;
 
-	py::class_<pa::ExprSym>(m, "ExprSym", py::base<pa::Expr>())
+	py::class_<pa::ExprSym, pa::Expr>(m, "ExprSym")
 		;
 
 	m.def("ExprWithArgs", expr_with_args_list);
@@ -862,6 +861,4 @@ PYBIND11_PLUGIN(pytanque)
 		py::module algos = m.def_submodule("algos");
 		algos.def("draw_without_replacement", draw_without_replacement_python);
 	}
-
-	return m.ptr();
 }

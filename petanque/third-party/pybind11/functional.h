@@ -12,64 +12,90 @@
 #include "pybind11.h"
 #include <functional>
 
-NAMESPACE_BEGIN(pybind11)
+NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 NAMESPACE_BEGIN(detail)
 
-template <typename Return, typename... Args> struct type_caster<std::function<Return(Args...)>> {
-    typedef std::function<Return(Args...)> type;
-    typedef typename std::conditional<std::is_same<Return, void>::value, void_type, Return>::type retval_type;
+template <typename Return, typename... Args>
+struct type_caster<std::function<Return(Args...)>> {
+    using type = std::function<Return(Args...)>;
+    using retval_type = conditional_t<std::is_same<Return, void>::value, void_type, Return>;
+    using function_type = Return (*) (Args...);
+
 public:
-    bool load(handle src_, bool) {
-        src_ = detail::get_function(src_);
-        if (!src_ || !PyCallable_Check(src_.ptr()))
+    bool load(handle src, bool convert) {
+        if (src.is_none()) {
+            // Defer accepting None to other overloads (if we aren't in convert mode):
+            if (!convert) return false;
+            return true;
+        }
+
+        if (!isinstance<function>(src))
             return false;
 
-        {
-            /*
-               When passing a C++ function as an argument to another C++
-               function via Python, every function call would normally involve
-               a full C++ -> Python -> C++ roundtrip, which can be prohibitive.
-               Here, we try to at least detect the case where the function is
-               stateless (i.e. function pointer or lambda function without
-               captured variables), in which case the roundtrip can be avoided.
-             */
-            if (PyCFunction_Check(src_.ptr())) {
-                capsule c(PyCFunction_GetSelf(src_.ptr()), true);
-                auto rec = (function_record *) c;
-                using FunctionType = Return (*) (Args...);
+        auto func = reinterpret_borrow<function>(src);
 
-                if (rec && rec->is_stateless && rec->data[1] == &typeid(FunctionType)) {
-                    struct capture { FunctionType f; };
-                    value = ((capture *) &rec->data)->f;
-                    return true;
-                }
+        /*
+           When passing a C++ function as an argument to another C++
+           function via Python, every function call would normally involve
+           a full C++ -> Python -> C++ roundtrip, which can be prohibitive.
+           Here, we try to at least detect the case where the function is
+           stateless (i.e. function pointer or lambda function without
+           captured variables), in which case the roundtrip can be avoided.
+         */
+        if (auto cfunc = func.cpp_function()) {
+            auto c = reinterpret_borrow<capsule>(PyCFunction_GET_SELF(cfunc.ptr()));
+            auto rec = (function_record *) c;
+
+            if (rec && rec->is_stateless &&
+                    same_type(typeid(function_type), *reinterpret_cast<const std::type_info *>(rec->data[1]))) {
+                struct capture { function_type f; };
+                value = ((capture *) &rec->data)->f;
+                return true;
             }
         }
 
-        object src(src_, true);
-        value = [src](Args... args) -> Return {
-            gil_scoped_acquire acq;
-            object retval(src(std::move(args)...));
-            /* Visual studio 2015 parser issue: need parentheses around this expression */
-            return (retval.template cast<Return>());
+        // ensure GIL is held during functor destruction
+        struct func_handle {
+            function f;
+            func_handle(function&& f_) : f(std::move(f_)) {}
+            func_handle(const func_handle&) = default;
+            ~func_handle() {
+                gil_scoped_acquire acq;
+                function kill_f(std::move(f));
+            }
         };
+
+        // to emulate 'move initialization capture' in C++11
+        struct func_wrapper {
+            func_handle hfunc;
+            func_wrapper(func_handle&& hf): hfunc(std::move(hf)) {}
+            Return operator()(Args... args) const {
+                gil_scoped_acquire acq;
+                object retval(hfunc.f(std::forward<Args>(args)...));
+                /* Visual studio 2015 parser issue: need parentheses around this expression */
+                return (retval.template cast<Return>());
+            }
+        };
+
+        value = func_wrapper(func_handle(std::move(func)));
         return true;
     }
 
     template <typename Func>
     static handle cast(Func &&f_, return_value_policy policy, handle /* parent */) {
-        auto result = f_.template target<Return (*)(Args...)>();
+        if (!f_)
+            return none().inc_ref();
+
+        auto result = f_.template target<function_type>();
         if (result)
             return cpp_function(*result, policy).release();
         else
             return cpp_function(std::forward<Func>(f_), policy).release();
     }
 
-    PYBIND11_TYPE_CASTER(type, _("Callable[[") +
-            type_caster<std::tuple<Args...>>::element_names() + _("], ") +
-            type_caster<retval_type>::name() +
-            _("]"));
+    PYBIND11_TYPE_CASTER(type, _("Callable[[") + concat(make_caster<Args>::name...) + _("], ")
+                               + make_caster<retval_type>::name + _("]"));
 };
 
 NAMESPACE_END(detail)
-NAMESPACE_END(pybind11)
+NAMESPACE_END(PYBIND11_NAMESPACE)
