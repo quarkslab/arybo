@@ -54,10 +54,14 @@ jobs:
         system-packages: ''
         package-path: 'petanque'
         pip-wheel-args: ''
+    - name: Gather wheels
+      run: |
+        mkdir wheelhouse_final
+        cp wheelhouse/*manylinux*.whl wheelhouse_final
     - uses: actions/upload-artifact@v1
       with:
         name: pytanque-wheels
-        path: wheelhouse/
+        path: wheelhouse_final/
 
   publish:
     if: github.event.release
