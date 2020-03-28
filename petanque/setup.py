@@ -5,8 +5,10 @@ import subprocess
 
 if platform.system() in ("Linux","Darwin"):
     # This will work w/ GCC and clang
-    compile_args = ['-std=c++14','-Wno-maybe-uninitialized','-flto','-Dpetanque_STATIC']
+    compile_args = ['-std=c++14','-flto','-Dpetanque_STATIC']
     link_args = ['-flto']
+    if platform.system() == "Linux":
+        link_args = ["-Wl,--strip-all","-Wl,-gc-sections"]
 elif platform.system() == "Windows":
     compile_args = ['/Dpetanque_STATIC','/TP', '/EHsc']
     link_args = []
