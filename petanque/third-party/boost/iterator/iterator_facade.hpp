@@ -8,7 +8,6 @@
 #define BOOST_ITERATOR_FACADE_23022003THW_HPP
 
 #include <boost/config.hpp>
-#include <boost/iterator.hpp>
 #include <boost/iterator/interoperable.hpp>
 #include <boost/iterator/iterator_traits.hpp>
 #include <boost/iterator/iterator_categories.hpp>
@@ -22,6 +21,7 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/add_const.hpp>
 #include <boost/type_traits/add_pointer.hpp>
+#include <boost/type_traits/add_lvalue_reference.hpp>
 #include <boost/type_traits/remove_const.hpp>
 #include <boost/type_traits/remove_reference.hpp>
 #include <boost/type_traits/is_convertible.hpp>
@@ -35,6 +35,8 @@
 #include <boost/mpl/always.hpp>
 #include <boost/mpl/apply.hpp>
 #include <boost/mpl/identity.hpp>
+
+#include <cstddef>
 
 #include <boost/iterator/detail/config_def.hpp> // this goes last
 
@@ -284,7 +286,15 @@ namespace iterators {
       : mpl::eval_if<
             mpl::and_<
                 // A proxy is only needed for readable iterators
-                is_convertible<Reference,Value const&>
+                is_convertible<
+                    Reference
+                    // Use add_lvalue_reference to form `reference to Value` due to
+                    // some (strict) C++03 compilers (e.g. `gcc -std=c++03`) reject
+                    // 'reference-to-reference' in the template which described in CWG
+                    // DR106.
+                    // http://www.open-std.org/Jtc1/sc22/wg21/docs/cwg_defects.html#106
+                  , typename add_lvalue_reference<Value const>::type
+                >
 
                 // No multipass iterator can have values that disappear
                 // before positions can be re-visited

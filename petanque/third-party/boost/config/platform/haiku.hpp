@@ -11,7 +11,6 @@
 
 #define BOOST_HAS_UNISTD_H
 #define BOOST_HAS_STDINT_H
-#define BOOST_HASH_NO_EXTENSIONS
 
 #ifndef BOOST_DISABLE_THREADS
 #  define BOOST_HAS_THREADS
@@ -26,8 +25,7 @@
 // thread API's not auto detected:
 //
 #define BOOST_HAS_SCHED_YIELD
-#define BOOST_HAS_PTHREAD_YIELD
 #define BOOST_HAS_GETTIMEOFDAY
 
 // boilerplate code:
-#include <boost/config/posix_features.hpp>
+#include <boost/config/detail/posix_features.hpp>
