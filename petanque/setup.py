@@ -5,10 +5,10 @@ import subprocess
 
 if platform.system() in ("Linux","Darwin"):
     # This will work w/ GCC and clang
-    compile_args = ['-std=c++14','-Wno-maybe-uninitialized','-flto','-DPA_DISTUTILS']
+    compile_args = ['-std=c++14','-Wno-maybe-uninitialized','-flto','-Dpetanque_STATIC']
     link_args = ['-flto']
 elif platform.system() == "Windows":
-    compile_args = ['/DPA_DISTUTILS','/TP', '/EHsc']
+    compile_args = ['/Dpetanque_STATIC','/TP', '/EHsc']
     link_args = []
 else:
     raise RuntimeError("unsupported platform '%s'!" % os.platform)
