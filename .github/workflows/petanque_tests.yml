@@ -1,0 +1,26 @@
+name: C/C++ CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: ["DEBUG", "RELEASE"]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        apt install ninja-build
+    - name: CMake
+      working-directory: petanque
+      run: |
+        mkdir build
+        cd build && cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -G Ninja ..
+    - name: Build
+      run: ninja
+    - name: Tests
+      run: ninja test
