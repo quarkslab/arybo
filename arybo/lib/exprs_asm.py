@@ -186,7 +186,7 @@ def to_llvm_ir(exprs, sym_to_value, IRB):
     if not llvmlite_available:
         raise RuntimeError("llvmlite module unavailable! can't assemble to LLVM IR...")
 
-    if not isinstance(exprs, collections.Iterable):
+    if not isinstance(exprs, collections.abc.Iterable):
         exprs = (exprs,)
 
     ret = None
@@ -200,7 +200,7 @@ def to_llvm_function(exprs, vars_, name="__arybo"):
     if not llvmlite_available:
         raise RuntimeError("llvmlite module unavailable! can't assemble to LLVM IR...")
 
-    if not isinstance(exprs, collections.Iterable):
+    if not isinstance(exprs, collections.abc.Iterable):
         exprs = (exprs,)
 
     M = ll.Module()
