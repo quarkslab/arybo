@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 #
 
-import os
 import sys
+
+try:
+    from IPython.terminal.embed import InteractiveShellEmbed
+except ImportError:
+    print("iarybo is based on ipython. You can install it using 'pip install ipython'")
+    sys.exit(1)
+
+import os
 
 from arybo.lib import MBA, expr_contains, expand_esf, expand_esf_inplace, simplify, simplify_inplace, boolean_expr_solve, flatten
 from arybo.lib.mba_exprs import prettyprint
@@ -119,6 +126,5 @@ Other exposed modules are:
 Report any issues to qbobf@quarkslab.com.
 '''
 
-from IPython.terminal.embed import InteractiveShellEmbed
 ipshell = InteractiveShellEmbed(banner1=doc, exit_msg="")
 ipshell()
