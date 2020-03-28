@@ -29,9 +29,16 @@ set(HEADER_DIST_FILES
 	../include/pa/vector.h
 )
 
-add_library(petanque STATIC SHARED ${SRC_FILES})
+add_library(petanque ${SRC_FILES})
 set(LINK_LIBRARIES ${TBB_LIBRARIES})
-target_link_libraries(petanque ${LINK_LIBRARIES})
+target_link_libraries(petanque PUBLIC ${LINK_LIBRARIES})
+set_property(TARGET petanque PROPERTY POSITION_INDEPENDENT_CODE ON)
+if (BUILD_SHARED_LIBS)
+  set_target_properties(petanque PROPERTIES
+    VISIBILITY_INLINES_HIDDEN ON
+    C_VISIBILITY_PRESET hidden
+    CXX_VISIBILITY_PRESET hidden)
+endif()
 
 install(TARGETS petanque LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(FILES ${HEADER_DIST_FILES} DESTINATION include/pa)
