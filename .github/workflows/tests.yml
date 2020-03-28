@@ -3,7 +3,7 @@ name: "petanque tests"
 on: [push]
 
 jobs:
-  build:
+  petanque:
 
     strategy:
       matrix:
@@ -52,3 +52,31 @@ jobs:
     - name: Tests
       working-directory: petanque/build
       run: ninja test
+
+  python:
+
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1
+      if: runner.os == 'Windows'
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install pytanque
+      working-directory: petanque
+      run: |
+        python ./setup.py install
+    - name: Install arybo
+      run: |
+        python ./setup.py install
+    - name: Tests
+      run: |
+        python -m unittest discover tests/arybo -p '*.py' 
