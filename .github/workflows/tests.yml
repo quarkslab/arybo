@@ -1,6 +1,10 @@
-name: "petanque tests"
+name: "Tests"
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   petanque:
