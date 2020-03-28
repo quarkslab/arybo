@@ -118,7 +118,7 @@ def app_inverse(A):
 
     # Use the graph to get the inverse of G1
     X = mba.var('X')
-    resolve_order = nx.topological_sort(DG, reverse=True)
+    resolve_order = reversed(list(nx.topological_sort(DG)))
     solved = dict()
     for i in resolve_order:
         e = G1nl[i]

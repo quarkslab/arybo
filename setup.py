@@ -8,7 +8,7 @@ setup(
     description="Manipulation, canonicalization and identification of mixed boolean-arithmetic symbolic expressions",
     packages=["arybo", "arybo.lib", "arybo.tools"],
     install_requires=[
-        "networkx",
+        "networkx==2.4",
         "ipython",
         "pytanque >= 1.0",
         "six"
