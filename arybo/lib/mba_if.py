@@ -404,7 +404,7 @@ class MBAVariable(object):
 
 
 class MBA(MBAImpl):
-    ''' Represents an MBA (Miwed Boolean Arithmetic) space of a fixed number of bits. '''
+    ''' Represents an MBA (Mixed Boolean Arithmetic) space of a fixed number of bits. '''
     def var(self, name):
         ''' Get an n-bit named symbolic variable
 
