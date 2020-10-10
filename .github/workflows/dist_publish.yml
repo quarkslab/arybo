@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
         os: [macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
@@ -23,7 +23,7 @@ jobs:
     - uses: ilammy/msvc-dev-cmd@v1
       if: runner.os == 'Windows'
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
     - name: Python dependencies
@@ -43,13 +43,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: 3.8
     - name: Build manylinux Python wheels
       uses: aguinet/python-wheels-manylinux-build@v0.2.2-manylinux2010_x86_64
       with:
-        python-versions: 'cp35-cp35m  cp36-cp36m  cp37-cp37m  cp38-cp38'
+        python-versions: 'cp35-cp35m cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
         build-requirements: ''
         system-packages: ''
         package-path: 'petanque'
@@ -71,7 +71,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: 3.8
     - name: Install dependencies
